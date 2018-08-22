@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Street Lights in ACT</title>
+    <style type="text/css">
+    </style>
+
+  </head>
+  <body>
+    <div id="drawing"></div>
+
+    <!-- All the scripts needed to get the drawingualisation working -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
+  	<script src="https://d3js.org/d3-array.v1.min.js"></script>
+  	<script src="https://d3js.org/d3-geo.v1.min.js"></script>
+  	<script type="text/javascript" src="data/suburbs.geojson.json"></script>
+    <script type="text/javascript" src="data/lights_geometry.geojson.json"></script>
+    <script type="text/javascript" src="data/lights.json"></script>
+  	<script type="text/javascript" src="data/commute.json"></script>
+
+    <script type="text/javascript">
+      var drawing = SVG("drawing").size(800, 800);
+
+      var projection = d3.geoMercator()
+                          .scale(1)
+                          .translate([400, 600]);
+
+      //filter the geojson to include only those suburbs in the bike data list
+      geojson.features = geojson.features.filter(g => lightsData.some(l => l.suburb == g.properties.ACT_LOCA_2));
+
+      projection.fitExtent([[20,20],[780,780]], geojson);
+
+      var mapPath = d3.geoPath(projection);
+
+      geojson.features.forEach(f => {
+        dataValue = commuteData[f.properties.ACT_LOCA_2];
+        var sg = drawing.group();
+        var outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
+        outline.fill('lightblue');
+
+
+        // store the label text on the group
+        sg.labelString = f.properties.ACT_LOCA_2 + " - " + Math.floor(dataValue*100)+'%';
+        // and the geo path data
+        sg.geoPath = f;
+
+        sg.on('mouseenter', function(){
+          label = drawing.text(this.labelString).move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
+        })
+
+        sg.on('mouseleave', function(){
+          label.remove();
+        })
+
+      });
+
+      lightsGeojson.features.forEach(f => {
+        var sg = drawing.group();
+        var points = sg.path(mapPath(f)); // draw the points across the map
+        mapPath.pointRadius(1); // sets the radius of the street lights to 1
+
+        //
+        if (f.properties.lampType === "COMPACT FLUORESCENT") {
+          points.fill('red');
+        } else if (f.properties.lampType === "HIGH PRESSURE SODIUM") {
+          points.fill('yellow');
+        } else if (f.properties.lampType === "LIGHT EMITTING DIODE") {
+          points.fill('green');
+        } else if (f.properties.lampType === "MERCURY HIGH PRESURE FLUORESCE") {
+          points.fill('white');
+        }
+
+        else {
+          points.fill('darkblue')
+        }
+        points.addClass('streetlights');
+      })
+
+    </script>
+  </body>
+</html>

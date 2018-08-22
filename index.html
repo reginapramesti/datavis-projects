@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Hello SVG.js!</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
+<style media="screen">
+
+  svg text{
+    font-size:15px;
+  }
+
+  svg rect{
+  }
+
+  svg .legend{
+    font-size: 10px;
+  }
+</style>
+  </head>
+  <body>
+  <h1>ACT vs Aus Education Percentage</h1>
+
+<div id="drawing">
+
+  </div>
+
+
+      <script type="text/javascript">
+      var draw = SVG('drawing').size(800, 600);
+
+      var data = [
+          {
+            "Education": "Preschool",
+            "ACT": 4.5,
+            "Aus": 4.8
+          },
+          {
+            "Education": "Primary - Government",
+            "ACT": 15.7,
+            "Aus": 18.2
+          },
+          {
+            "Education": "Primary - Catholic",
+            "ACT": 6.2,
+            "Aus": 5.3
+          },
+          {
+            "Education": "Primary - other",
+            "ACT": 3,
+            "Aus": 3.2
+          },
+          {
+            "Education": "Secondary - Government",
+            "ACT": 10.3,
+            "Aus": 11.5
+          },
+          {
+            "Education": "Secondary - Catholic",
+            "ACT": 4.8,
+            "Aus": 4.7
+          },
+          {
+            "Education": "Secondary - other",
+            "ACT": 3.2,
+            "Aus": 3.9
+          },
+          {
+            "Education": "Technical or further education",
+            "ACT": 6.2,
+            "Aus": 5.9
+          },
+          {
+            "Education": "University or tertiary",
+            "ACT": 26,
+            "Aus": 16.1
+          },
+          {
+            "Education": "Other",
+            "ACT": 2.4,
+            "Aus": 2.8
+          },
+          {
+            "Education": "Not stated",
+            "ACT": 17.6,
+            "Aus": 23.7
+          }
+        ]
+
+        var barspacing = 25;
+        var barheight = 20;
+        var xmargin = 200;
+        var xscale = 15;
+        for (var i = 0; i < data.length; i++) {
+          var d = data[i];
+          draw.rect(d.ACT * xscale, barheight/2).move(xmargin, i*barspacing);
+          draw.text(d.Education).move(0, i*barspacing);
+        }
+        for (var i=0; i < data.length; i++) {
+          var d= data[i];
+          draw.rect(d.Aus * xscale, barheight/2).move(xmargin, i*barspacing+barheight/2).fill("red");
+        }
+
+        draw.line(xmargin, 280, 600, 280).stroke('black');
+
+        var ticks = [0, 5, 10, 15, 20, 25, 30];
+        for (var i = 0; i < ticks.length; i++) {
+          draw.line(0, 0, 0, 10).move(xmargin + ticks[i]*xscale, 275).stroke('black');
+          draw.text(ticks[i] + "%").move(xmargin + ticks[i]*xscale, 285);
+        }
+        draw.rect(10,10).move(550,5);
+        draw.text("ACT").move(565,0).addClass('legend');
+        draw.rect(10,10).move(550,15).fill("red");
+        draw.text("Aus").move(565,10).addClass('legend');
+
+      </script>
+
+  </body>
+</html>
