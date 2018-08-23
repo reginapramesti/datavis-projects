@@ -7,6 +7,7 @@
 
   </head>
   <body>
+    <h1>Street Lights in ACT Suburbs</h1>
     <div id="drawing"></div>
 
     <!-- All the scripts needed to get the drawingualisation working -->
@@ -19,7 +20,7 @@
   	<script type="text/javascript" src="data/commute.json"></script>
 
     <script type="text/javascript">
-      var drawing = SVG("drawing").size(800, 800);
+      var drawing = SVG("drawing").size(1500, 1050);
 
       var projection = d3.geoMercator()
                           .scale(1)
@@ -28,7 +29,7 @@
       //filter the geojson to include only those suburbs in the bike data list
       geojson.features = geojson.features.filter(g => lightsData.some(l => l.suburb == g.properties.ACT_LOCA_2));
 
-      projection.fitExtent([[20,20],[780,780]], geojson);
+      projection.fitExtent([[20,20],[1000,1000]], geojson);
 
       var mapPath = d3.geoPath(projection);
 
@@ -36,16 +37,20 @@
         dataValue = commuteData[f.properties.ACT_LOCA_2];
         var sg = drawing.group();
         var outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
-        outline.fill('lightblue');
+        outline.fill('#0e2549');
+        //outline.stroke({color: 'black'});
 
 
-        // store the label text on the group
-        sg.labelString = f.properties.ACT_LOCA_2 + " - " + Math.floor(dataValue*100)+'%';
-        // and the geo path data
-        sg.geoPath = f;
-
+        // // store the label text on the group
+        // sg.labelString = f.properties.ACT_LOCA_2 + " - " + Math.floor(dataValue*100)+'%';
+        // // and the geo path data
+        // sg.geoPath = f;
+        //
+        var overlay = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
+        overlay.fill('#0e2549');
+        overlay.opacity(0.7);
         sg.on('mouseenter', function(){
-          label = drawing.text(this.labelString).move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
+          //label = drawing.text(this.labelString).move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
         })
 
         sg.on('mouseleave', function(){
@@ -56,25 +61,81 @@
 
       lightsGeojson.features.forEach(f => {
         var sg = drawing.group();
+        mapPath.pointRadius(1.5); // sets the radius of the street lights to 1
         var points = sg.path(mapPath(f)); // draw the points across the map
-        mapPath.pointRadius(1); // sets the radius of the street lights to 1
 
-        //
+        mapPath.pointRadius(10); // make this (10 * f.properties.outreach)
+        var outreach = sg.path(mapPath(f));
+        outreach.opacity(0.1);
+
+
+        // Compact fluorescent lights
         if (f.properties.lampType === "COMPACT FLUORESCENT") {
-          points.fill('red');
-        } else if (f.properties.lampType === "HIGH PRESSURE SODIUM") {
+          points.fill('tomato');
+          outreach.fill('tomato');
+        }
+        // Sodium lights
+        else if (f.properties.lampType === "HIGH PRESSURE SODIUM"
+                || f.properties.lampType === "SODIUM VAPOUR HIGH PRESSURE"
+                || f.properties.lampType === "SODIUM VAPOUR HIGH PRESSURE TW"
+                || f.properties.lampType === "SODIUM VAPOUR LOW PRESSURE") {
           points.fill('yellow');
-        } else if (f.properties.lampType === "LIGHT EMITTING DIODE") {
-          points.fill('green');
-        } else if (f.properties.lampType === "MERCURY HIGH PRESURE FLUORESCE") {
+          outreach.fill('yellow');
+        }
+        // LED lights
+        else if (f.properties.lampType === "LIGHT EMITTING DIODE") {
           points.fill('white');
+          outreach.fill('white');
+        }
+        // Metal halide lights
+        else if (f.properties.lampType === "METAL HALIDE") {
+          points.fill('green');
+          outreach.fill('green');
         }
 
+        // Mercury lights
+        else if (f.properties.lampType === "MERCURY HIGH PRESURE FLUORESCE"
+                || f.properties.lampType === "MERCURY HIGH PRESURE PHOSPHOR"
+                || f.properties.lampType === "MERCURY LOW PRESURE FLUORESCEN"
+                || f.properties.lampType === "MERCURY VAPOUR") {
+          points.fill('cyan');
+          outreach.fill('cyan');
+        }
+
+        // Unidentified lamp types or small categories
         else {
-          points.fill('darkblue')
+          points.fill('plum')
+          outreach.fill('plum');
         }
         points.addClass('streetlights');
       })
+
+      geojson.features.forEach(f => {
+        dataValue = commuteData[f.properties.ACT_LOCA_2];
+        var sg = drawing.group();
+        var overlay = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
+        overlay.fill('#0e2549');
+        overlay.stroke({width: 3, color: 'white'});
+        overlay.opacity(0);
+
+        // store the label text and the path on the group
+        sg.labelString = f.properties.ACT_LOCA_2;
+        sg.geoPath = f;
+
+
+        sg.on('mouseenter', function(){
+          overlay.opacity(0.4);
+          label = drawing.text(this.labelString)
+                    .move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1])
+                    .addClass('suburbLabels');
+        })
+
+        sg.on('mouseleave', function(){
+          overlay.opacity(0);
+          label.remove();
+        })
+
+      });
 
     </script>
   </body>
