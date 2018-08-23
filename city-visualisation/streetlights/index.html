@@ -3,6 +3,13 @@
   <head>
     <title>Street Lights in ACT</title>
     <style type="text/css">
+      .suburbLabels {
+        color: white;
+      }
+
+      body {
+        background-color: #0e2549;
+      }
     </style>
 
   </head>
@@ -92,7 +99,6 @@
           points.fill('green');
           outreach.fill('green');
         }
-
         // Mercury lights
         else if (f.properties.lampType === "MERCURY HIGH PRESURE FLUORESCE"
                 || f.properties.lampType === "MERCURY HIGH PRESURE PHOSPHOR"
@@ -101,7 +107,6 @@
           points.fill('cyan');
           outreach.fill('cyan');
         }
-
         // Unidentified lamp types or small categories
         else {
           points.fill('plum')
@@ -124,10 +129,10 @@
 
 
         sg.on('mouseenter', function(){
-          overlay.opacity(0.4);
+          overlay.opacity(0.5);
           label = drawing.text(this.labelString)
-                    .move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1])
-                    .addClass('suburbLabels');
+                    .move(mapPath.centroid(this.geoPath)[0] - this.labelString.length * 5,mapPath.centroid(this.geoPath)[1])
+                    .fill('white');
         })
 
         sg.on('mouseleave', function(){
