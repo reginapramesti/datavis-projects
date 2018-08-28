@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ACT Transport</title>
+    <style type="text/css">
+    </style>
+
+  </head>
+  <body>
+    <h1>ACT Average Passenger Boardings by Service Type</h1>
+    <div id="drawing"></div>
+
+    <!-- All the scripts needed to get the drawingualisation working -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
+  	<script type="text/javascript" src="data/transport.json"></script>
+
+    <script type="text/javascript">
+      var draw = SVG("drawing").size(1000, 1000);
+
+      const numCategories = 4;
+
+      // Prepare the data by putting them into arrays
+      var monthArray = new Array(transportData.length / 4);
+      var transportArray = new Array(transportData.length / 4);
+      for (var i = 0; i < transportArray.length; i++) {
+        transportArray[i] = new Array(numCategories);
+        monthArray[i] = transportData[i * numCategories].month;
+        for (var j = 0; j < numCategories; j++) {
+          transportArray[i][j] = transportData[i * numCategories + j].avBoardings;
+        }
+      }
+
+      draw.circle(500);
+      console.log(transportArray);
+      console.log(monthArray);
+
+
+    </script>
+  </body>
+</html>

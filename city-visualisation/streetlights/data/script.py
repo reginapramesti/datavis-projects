@@ -21,7 +21,7 @@ with open('lights.csv', 'r') as source_file:
                 new_data_writer.writerow(new_row)
                 count += 1 # workaround for errors with changing geolocation to 2 columns
             else:
-                if outreach[0] != 'NONE':
+                if outreach[0] != 'NONE' and outreach[0] != '':
                     new_row[-2] = float(outreach[0])
                 new_row.append(coords[0])
                 new_row.append(coords[1])
