@@ -13,9 +13,191 @@
     <!-- All the scripts needed to get the drawingualisation working -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
   	<script type="text/javascript" src="data/crime.json"></script>
+    <script type="text/javascript" src="../transport/data/transport.json"></script>
 
     <script type="text/javascript">
-      var drawing = SVG("drawing").size(1000, 1000);
+      var draw = SVG("drawing").size(1000, 1000);
+
+      const numCategories = 13;
+      var separation = new Array(numCategories);
+      for (var i = 0; i < separation.length; i++) {
+        separation[i] = 1;
+      }
+      //var separation = [13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+      console.log(separation);
+
+      var corners = [
+        {x: 350, y: 0},
+        {x: 512.653110215319, y: 40.090391021376526},
+        {x: 638.0443530627797, y: 151.17733864409536},
+        {x: 697.4481059343188, y: 307.8121619106368},
+        {x: 677.2556849398952, y: 474.1117104648875},
+        {x: 582.0929303842781, y: 611.9787618598855},
+        {x: 433.7604825006452, y: 689.8296360991183},
+        {x: 266.2395174993548, y: 689.8296360991183},
+        {x: 117.90706961572164, y: 611.9787618598855},
+        {x: 22.744315060104782, y: 474.1117104648875},
+        {x: 2.5518940656811537, y: 307.81216191063663},
+        {x: 61.95564693722014, y: 151.17733864409556},
+        {x: 187.34688978468108, y: 40.090391021376526}
+      ];
+
+      /*// Prepare the data by putting them into arrays
+      var transportArray = new Array(transportData.length / 4);
+      var passengersArray = new Array(transportData.length / 4);
+      for (var i = 0; i < transportArray.length; i++) {
+        transportArray[i] = new Array(numCategories);
+        var totalPassengers = 0;
+        for (var j = 0; j < numCategories; j++) {
+          transportArray[i][j] = 1;
+        }
+        passengersArray[i] = 13;
+      }
+
+      console.log(transportArray);
+      console.log(passengersArray);*/
+
+      // Pie chart
+      // Based on tutorial https://danielpataki.com/svg-pie-chart-javascript/
+      var maxCircleSize = 700;
+      var circleIncrements = 70;
+
+      var sectors = [];
+      var colors = 'white';
+
+      var l = maxCircleSize / 2;
+      var a = 0; // Angle
+      var aRad = 0; // Angle in Rad
+      var z = 0; // Size z
+      var x = 0; // Side x
+      var y = 0; // Side y
+      var X = 0; // SVG X coordinate
+      var Y = 0; // SVG Y coordinate
+      var R = 0; // Rotation
+
+      separation.map(function(item, key) {
+        // var l = maxCircleSize / 2;
+        // var a = 0; // Angle
+        // var aRad = 0; // Angle in Rad
+        // var z = 0; // Size z
+        // var x = 0; // Side x
+        // var y = 0; // Side y
+        // var X = 0; // SVG X coordinate
+        // var Y = 0; // SVG Y coordinate
+        // var R = 0; // Rotation
+
+        let percentage = item / numCategories;
+        a = 360 * percentage;
+        aCalc = (a > 180) ? 360 - a : a;
+        aRad = aCalc * Math.PI / 180;
+        z = Math.sqrt(2 * l * l - (2 * l * l * Math.cos(aRad)));
+        if (aCalc <= 90) {
+          x = l * Math.sin(aRad);
+        } else {
+          x = l * Math.sin((180 - aCalc) * Math.PI / 180 );
+        }
+
+        y = Math.sqrt(z * z - x * x);
+        Y = y;
+
+        if (a <= 180) {
+          X = l + x;
+          arcSweep = 0;
+        } else {
+          X = l - x;
+          arcSweep = 1;
+        }
+
+        sectors.push({
+          percentage: percentage,
+          color: colors,
+          arcSweep: arcSweep,
+          L: l,
+          X: X,
+          Y: Y,
+          R: R
+        });
+        R = R + a;
+
+      })
+
+      /*for (var i = 0; i < numCategories; i++) {
+
+        sectors[i] = [];
+        transportArray[i].map(function(item, key) {
+          let percentage = item / passengersArray[i];
+          a = 360 * percentage;
+          aCalc = (a > 180) ? 360 - a : a;
+          aRad = aCalc * Math.PI / 180;
+          z = Math.sqrt(2 * l * l - (2 * l * l * Math.cos(aRad)));
+          if (aCalc <= 90) {
+            x = l * Math.sin(aRad);
+          } else {
+            x = l * Math.sin((180 - aCalc) * Math.PI / 180 );
+          }
+
+          y = Math.sqrt(z * z - x * x);
+          Y = y;
+
+          if (a <= 180) {
+            X = l + x;
+            arcSweep = 0;
+          } else {
+            X = l - x;
+            arcSweep = 1;
+          }
+
+          sectors[i].push({
+            percentage: percentage,
+            color: colors,
+            arcSweep: arcSweep,
+            L: l,
+            X: X,
+            Y: Y,
+            R: R
+          });
+          R = R + a;
+        })
+      }*/
+
+      console.log(sectors)
+
+      //sectors = calculateSectors(data);
+      sectors.map(function(sector) {
+          var path = draw.path('M' + sector.L + ',' + sector.L + ' L' + sector.L + ',0 A' + sector.L + ',' + sector.L + ' 1 0,1 ' + sector.X + ', ' + sector.Y + ' z');
+          path.fill(sector.color);
+          path.stroke({color: 'black', width: 0.2});
+          path.rotate(sector.R, sector.L, sector.L);
+          //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
+
+      });
+
+      for (var i = 0; i < 10; i++) {
+        var gridLines = draw.circle(circleIncrements * i);
+        gridLines.center(maxCircleSize * 0.5, maxCircleSize * 0.5);
+        gridLines.attr({
+          fill: 'white',
+          'fill-opacity': 0
+        });
+
+        gridLines.stroke({color: 'black', width: 0.2});
+      }
+
+      // var midCircle = draw.circle(maxCircleSize * 0.28 * 2);
+      // midCircle.fill('white');
+      // midCircle.center(maxCircleSize * 0.5, maxCircleSize * 0.5);
+
+
+      // var point = draw.circle(10).center(sectors[0][1].L, 10);
+      // point.rotate(sectors[0][1].R, sectors[0][1].L, sectors[0][1].L);
+      //
+      // console.log(point.matrix());
+
+      corners.map(function(corner) {
+        var circle = draw.circle(5);
+        circle.center(corner.x, corner.y);
+      })
 
     </script>
   </body>

@@ -22,18 +22,121 @@
       // Prepare the data by putting them into arrays
       var monthArray = new Array(transportData.length / 4);
       var transportArray = new Array(transportData.length / 4);
+      var passengersArray = new Array(transportData.length / 4);
       for (var i = 0; i < transportArray.length; i++) {
         transportArray[i] = new Array(numCategories);
         monthArray[i] = transportData[i * numCategories].month;
+        var totalPassengers = 0;
         for (var j = 0; j < numCategories; j++) {
           transportArray[i][j] = transportData[i * numCategories + j].avBoardings;
+          totalPassengers += transportArray[i][j];
         }
+        passengersArray[i] = totalPassengers;
       }
 
-      draw.circle(500);
+      //draw.circle(500);
       console.log(transportArray);
       console.log(monthArray);
+      console.log(passengersArray);
 
+      // Pie chart
+      // Based on tutorial https://danielpataki.com/svg-pie-chart-javascript/
+      var data = {
+        size: 230,
+        sectors: [
+          {
+              percentage: 0.45,
+              label: 'Thing 1'
+          },
+          {
+              percentage: 0.21,
+              label: "Thing Two"
+          },
+          {
+            percentage: 0.11,
+            label: "Another Thing"
+          },
+          {
+              percentage: 0.23,
+              label: "Pineapple"
+          }
+        ]
+      }
+
+      var sectors = new Array(transportArray.length);
+      var colors = [
+          "#61C0BF", "#DA507A", "#BB3D49", "#DB4547"
+      ];
+
+      for (var i = 0; i < transportArray.length; i++) {
+
+        var l = data.size / 2;
+        var a = 0; // Angle
+        var aRad = 0; // Angle in Rad
+        var z = 0; // Size z
+        var x = 0; // Side x
+        var y = 0; // Side y
+        var X = 0; // SVG X coordinate
+        var Y = 0; // SVG Y coordinate
+        var R = 0; // Rotation
+
+        sectors[i] = [];
+        transportArray[i].map(function(item, key) {
+          let percentage = item / passengersArray[i];
+          a = 360 * percentage;
+          aCalc = (a > 180) ? 360 - a : a;
+          aRad = aCalc * Math.PI / 180;
+          z = Math.sqrt(2 * l * l - (2 * l * l * Math.cos(aRad)));
+          if (aCalc <= 90) {
+            x = l * Math.sin(aRad);
+          } else {
+            x = l * Math.sin((180 - aCalc) * Math.PI / 180 );
+          }
+
+          y = Math.sqrt(z * z - x * x);
+          Y = y;
+
+          if (a <= 180) {
+            X = l + x;
+            arcSweep = 0;
+          } else {
+            X = l - x;
+            arcSweep = 1;
+          }
+
+          sectors[i].push({
+            percentage: percentage,
+            color: colors[key],
+            arcSweep: arcSweep,
+            L: l,
+            X: X,
+            Y: Y,
+            R: R
+          });
+          R = R + a;
+        })
+      }
+
+      console.log(sectors)
+
+      //sectors = calculateSectors(data);
+      sectors[0].map(function(sector) {
+          var path = draw.path('M' + sector.L + ',' + sector.L + ' L' + sector.L + ',0 A' + sector.L + ',' + sector.L + ' 1 0,1 ' + sector.X + ', ' + sector.Y + ' z');
+          path.fill(sector.color);
+          path.rotate(sector.R, sector.L, sector.L);
+          //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
+
+      });
+
+      var midCircle = draw.circle(data.size * 0.28 * 2);
+      midCircle.fill('white');
+      midCircle.center(data.size * 0.5, data.size * 0.5);
+
+
+      var point = draw.circle(10).center(sectors[0][1].L, 10);
+      point.rotate(sectors[0][1].R, sectors[0][1].L, sectors[0][1].L);
+
+      console.log(point.matrix());
 
     </script>
   </body>
