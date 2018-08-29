@@ -94,7 +94,7 @@
         for (var i = 0; i < data.length; i++) {
           var d = data[i];
           draw.rect(d.ACT * xscale, barheight/2).move(xmargin, i*barspacing);
-          draw.text(d.Education).move(0, i*barspacing);
+          draw.text(d.Education).move(190, i*barspacing).attr({'text-anchor': "end"});
         }
         for (var i=0; i < data.length; i++) {
           var d= data[i];

@@ -6,6 +6,7 @@
       .clickable {
         cursor: move;
       }
+
     </style>
 
   </head>
@@ -40,7 +41,7 @@
       var yScale = 4;
       var xMargin = 650;
       var barWidth = 30;
-      var barSpacing = 35;
+      var barSpacing = 40;
       var yBottom = 500;
 
       // clickable timeline
@@ -59,7 +60,7 @@
 
       var sectors = new Array(transportArray.length);
       var colors = [
-          "lightseagreen", "green", "lightcoral", "darkorange"
+          "lightseagreen", "lightcoral", "green", "darkorange"
       ];
 
       for (let i = 0; i < transportArray.length; i++) {
@@ -135,7 +136,7 @@
 
 
       var bars = new Array(transportArray.length);
-
+      var textSpacing = 40;
       for (let i = 0; i < sectors.length; i++) {
         let cumulativeHeight = 0;
         bars[i] = new Array(numCategories);
@@ -151,7 +152,14 @@
           cumulativeHeight += value;
         }
 
+        var textOffsetX = 20;
+        var textOffsetY = 10;
+        draw.text(monthArray[i])
+            .move(xMargin + i * textSpacing + textOffsetX, yBottom + textOffsetY)
+            .rotate(45, xMargin + i * textSpacing + textOffsetX, yBottom + textOffsetY)
+            .attr({'text-anchor': "start"});
       }
+
 
       // X and y axes
       const marginOffset = 10;
@@ -160,13 +168,44 @@
       draw.line(xMargin - marginOffset, yBottom, xMargin + barSpacing * sectors.length + 20, yBottom)
           .stroke({color: 'black', width: 2});
 
+      // Ticks
+      var ticks = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
+      var ticksOffset = marginOffset + 5;
+      var labelsOffsetX = 5;
+      var labelsOffsetY = 5;
+      var ylabels = new Array(ticks.length);
+      for (let i = 0; i < ylabels.length; i++) {
+        draw.line(0, 0, 10, 0)
+            .stroke({color: 'black', width: 2})
+            .move(xMargin - ticksOffset, yBottom - ticks[i] * yScale);
+
+        draw.text(ticks[i] + "")
+            .move(xMargin - ticksOffset - labelsOffsetX, yBottom - ticks[i] * yScale - labelsOffsetY)
+            .attr({'text-anchor': "end"});
+      }
+
       // The timeline part
       for (let i = 0; i < monthArray.length; i++) {
+        let offset = 25;
+        draw.text(monthArray[i])
+            .move(lineXMargin + i * pointSpacing, lineYMargin + yBottom + offset)
+            //.rotate(45, xMargin + i * pointSpacing + textOffsetX, yBottom + textOffsetY)
+            .attr({'text-anchor': "middle"});
+
         let scrollbar = draw.circle(25)
             .center(lineXMargin + i * pointSpacing, lineYMargin + yBottom)
             .fill('white')
             .stroke({color:'blue', width: 5})
             .addClass('clickable');
+
+        scrollbar.mouseover(function() {
+          scrollbar.fill('lightblue');
+        });
+
+        scrollbar.mouseout(function() {
+          scrollbar.fill('white');
+        })
+
         scrollbar.click(function() {
           draw.circle(chartSize).center(chartSize / 2 + margin, chartSize / 2 + margin).fill('white');
           sectors[i].map(function(sector, key) {
@@ -279,6 +318,31 @@
       let bottomVertex = (lineXMargin) + ',' + (lineYMargin + yBottom - 28) + ' ';
       draw.polygon(leftVertex + rightVertex + bottomVertex).fill('blue');
 
+      var legendBoxWidth = 420;
+      var legendBoxHeight = 75;
+      var legendMarginX = 60;
+      var legendMarginY = 480;
+      draw.rect(legendBoxWidth, legendBoxHeight)
+          .move(legendMarginX, legendMarginY)
+          .fill('none')
+          .stroke({color: 'black'});
+
+      draw.line(0, 0, 30, 0)
+          .stroke({color: colors[0], width: 7,linecap: 'round'})
+          .move(legendMarginX + 20, legendMarginY + 20)
+      draw.text(transportData[0].serviceType).move(legendMarginX + 65, legendMarginY + 15);
+      draw.line(0, 0, 30, 0)
+          .stroke({color: colors[1], width: 7,linecap: 'round'})
+          .move(legendMarginX + 250, legendMarginY + 20)
+      draw.text(transportData[1].serviceType).move(legendMarginX + 295, legendMarginY + 15);
+      draw.line(0, 0, 30, 0)
+          .stroke({color: colors[2], width: 7,linecap: 'round'})
+          .move(legendMarginX + 20, legendMarginY + 55)
+      draw.text(transportData[2].serviceType).move(legendMarginX + 65, legendMarginY + 50);
+      draw.line(0, 0, 30, 0)
+          .stroke({color: colors[3], width: 7,linecap: 'round'})
+          .move(legendMarginX + 250, legendMarginY + 55)
+      draw.text(transportData[3].serviceType).move(legendMarginX + 295, legendMarginY + 50);
 
     </script>
   </body>

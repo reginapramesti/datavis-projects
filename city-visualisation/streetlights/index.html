@@ -8,17 +8,25 @@
       }
 
       body {
-        background-color: #0e2549;
+        background-color: #050c26;
       }
 
       .streetlights {
+        color: white;
+      }
+
+      .switch {
+        cursor: pointer;
+      }
+
+      h1 {
         color: white;
       }
     </style>
 
   </head>
   <body>
-    <h1>Street Lights in ACT Suburbs</h1>
+    <h1>Street Lights in Northern Canberra Suburbs</h1>
     <div id="drawing"></div>
 
     <!-- All the scripts needed to get the drawingualisation working -->
@@ -30,7 +38,13 @@
   	<script type="text/javascript" src="data/commute.json"></script>
 
     <script type="text/javascript">
-      var drawing = SVG("drawing").size(1500, 1050);
+      var width = 1300;
+      var height = 1020;
+      var drawing = SVG("drawing").size(width, height);
+
+      var colours = ['lightpink', 'gold', 'sandybrown', 'orchid', 'cyan', 'lightgreen'];
+      var lampTypes = ['Compact\nFluorescent', 'Sodium\nLamps', 'Light Emitting\nDiode', 'Metal\nHalide', 'Mercury\nLamps', 'Others /\nNot specified'];
+      var lightsOn = [true, true, true, true, true, true];
 
       var projection = d3.geoMercator()
                           .scale(1)
@@ -47,7 +61,8 @@
         dataValue = commuteData[f.properties.ACT_LOCA_2];
         var sg = drawing.group();
         var outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
-        outline.fill('#0e2549');
+        outline.fill('#050c26');
+        //outline.stroke({color: 'lightgray', width: 2});
         //outline.stroke({color: 'black'});
 
 
@@ -57,72 +72,193 @@
         // sg.geoPath = f;
         //
         sg.on('mouseenter', function(){
+          // outline.stroke({color: 'lightgray', width: 2});
           //label = drawing.text(this.labelString).move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
         })
 
         sg.on('mouseleave', function(){
+          // outline.stroke('none');
           //label.remove();
         })
 
       });
 
+      var fluorescentArray = [];
+      var sodiumArray = [];
+      var ledArray = [];
+      var halideArray = [];
+      var mercuryArray = [];
+      var miscArray = [];
+
       lightsGeojson.features.forEach(f => {
         var sg = drawing.group();
-        mapPath.pointRadius(1.5); // sets the radius of the street lights to 1
-        var points = sg.path(mapPath(f)); // draw the points across the map
 
         mapPath.pointRadius(10); // make this (10 * f.properties.outreach)
         var outreach = sg.path(mapPath(f));
         outreach.opacity(0.1);
 
+        mapPath.pointRadius(1.5); // sets the radius of the street lights to 1
+        var points = sg.path(mapPath(f)); // draw the points across the map
+
+        // Handler for turning the lights on and off
+        outreach.on('toggleOnOff', function(e) {
+          if (!lightsOn[e.detail.index]) {
+            outreach.animate(100, '-', 0).opacity(0.1);
+          } else {
+            outreach.animate(100, '-', 0).opacity(0);
+          }
+        })
 
         // Compact fluorescent lights
         if (f.properties.lampType === "COMPACT FLUORESCENT") {
-          points.fill('tomato');
-          outreach.fill('tomato');
+          points.fill(colours[0]);
+          outreach.fill(colours[0]);
+          fluorescentArray.push(outreach);
         }
         // Sodium lights
         else if (f.properties.lampType === "HIGH PRESSURE SODIUM"
                 || f.properties.lampType === "SODIUM VAPOUR HIGH PRESSURE"
                 || f.properties.lampType === "SODIUM VAPOUR HIGH PRESSURE TW"
                 || f.properties.lampType === "SODIUM VAPOUR LOW PRESSURE") {
-          points.fill('yellow');
-          outreach.fill('yellow');
+          points.fill(colours[1]);
+          outreach.fill(colours[1]);
+          sodiumArray.push(outreach);
         }
         // LED lights
         else if (f.properties.lampType === "LIGHT EMITTING DIODE") {
-          points.fill('white');
-          outreach.fill('white');
+          points.fill(colours[2]);
+          outreach.fill(colours[2]);
+          ledArray.push(outreach);
         }
         // Metal halide lights
         else if (f.properties.lampType === "METAL HALIDE") {
-          points.fill('green');
-          outreach.fill('green');
+          points.fill(colours[3]);
+          outreach.fill(colours[3]);
+          halideArray.push(outreach);
         }
         // Mercury lights
         else if (f.properties.lampType === "MERCURY HIGH PRESURE FLUORESCE"
                 || f.properties.lampType === "MERCURY HIGH PRESURE PHOSPHOR"
                 || f.properties.lampType === "MERCURY LOW PRESURE FLUORESCEN"
                 || f.properties.lampType === "MERCURY VAPOUR") {
-          points.fill('cyan');
-          outreach.fill('cyan');
+          points.fill(colours[4]);
+          outreach.fill(colours[4]);
+          mercuryArray.push(outreach);
         }
         // Unidentified lamp types or small categories
         else {
-          points.fill('plum')
-          outreach.fill('plum');
+          points.fill(colours[5])
+          outreach.fill(colours[5]);
+          miscArray.push(outreach);
         }
         points.addClass('streetlights');
 
-        sg.on('mouseenter', function(){
-          console.log(d3.mouse(this));
-          label = drawing.text("This is a text").move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
+        let box;
+
+        sg.on('mouseenter', function(event){
+          box = drawing.group();
+          box.rect(420, 100)
+              .fill('white')
+              .attr({'fill-opacity': 0.6})
+              .stroke('black')
+              .move(event.pageX + 5, event.pageY - 20);
+          box.text(f.properties.suburb + " STREET LIGHT")
+              .attr({'text-anchor': "middle"})
+              .move(event.pageX + 215, event.pageY - 20 + 15)
+              .addClass("infoTitle")
+
+          let outreachText = (f.properties.outreach === "NONE" || f.properties.outreach === "") ? "N/A outreach detected of lamp type " + f.properties.lamp : f.properties.outreach + "m outreach";
+          box.text(outreachText)
+              .attr({'text-anchor': "middle"})
+              .move(event.pageX + 215, event.pageY - 20 + 40)
+              .addClass("infoDesc");
+          box.text("Column properties: " + f.properties.columnHeight + " of " + f.properties.columnMaterial)
+              .attr({'text-anchor': "middle"})
+              .move(event.pageX + 215, event.pageY - 20 + 70)
+              .addClass("infoDesc");
+          // console.log(d3.mouse(this));
+          // label = drawing.text("This is a text").move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
         })
 
         sg.on('mouseleave', function(){
-          label.remove();
+          box.remove();
+          // label.remove();
         })
       })
+
+      var boxmarginX = 120;
+      var boxmarginY = 150;
+      for (let i = 0; i < 6; i++) {
+        drawing.rect(280, 100)
+                .fill('lightcyan')
+                .stroke({color: 'lightseagreen', width: 5})
+                .move(width - 250 - boxmarginX, boxmarginY + i * 100);
+        let legendColours = drawing.rect(100, 40)
+                                    .fill(colours[i])
+                                    .move(width - 250 - boxmarginX + 20, boxmarginY + i * 100 + 30)
+        let toggleSwitch = drawing.rect(40, 40)
+                            .fill('white')
+                            .move(width - 250 - boxmarginX + 80, boxmarginY + i * 100 + 30)
+
+        let button = drawing.rect(100, 40)
+                           .fill('white')
+                           .attr({'fill-opacity': 0})
+                           .stroke({colour: 'black', width: 3})
+                           .move(width - 250 - boxmarginX + 20, boxmarginY + i * 100 + 30)
+                           .addClass('switch');
+
+        button.click(function() {
+          toggleSwitch.fire('toggleOnOff');
+          legendColours.fire('toggleColours');
+
+          if (i == 0) {
+            fluorescentArray.forEach(light => {
+              light.fire('toggleOnOff', {index: i});
+            })
+          } else if (i == 1) {
+            sodiumArray.forEach(light => {
+              light.fire('toggleOnOff', {index: i});
+            })
+          } else if (i == 2) {
+            ledArray.forEach(light => {
+              light.fire('toggleOnOff', {index: i});
+            })
+          } else if (i == 3) {
+            halideArray.forEach(light => {
+              light.fire('toggleOnOff', {index: i});
+            })
+          } else if (i == 4) {
+            mercuryArray.forEach(light => {
+              light.fire('toggleOnOff', {index: i});
+            })
+          } else if (i == 5) {
+            miscArray.forEach(light => {
+              light.fire('toggleOnOff', {index: i});
+            })
+          }
+
+          lightsOn[i] = !lightsOn[i];
+        })
+
+        toggleSwitch.on('toggleOnOff', function() {
+            if (!lightsOn[i]) {
+              toggleSwitch.animate(200, '>', 0).move(width - 250 - boxmarginX + 80, boxmarginY + i * 100 + 30);
+            } else {
+              toggleSwitch.animate(200, '>', 0).move(width - 250 - boxmarginX + 20, boxmarginY + i * 100 + 30);
+            }
+        })
+
+        legendColours.on('toggleColours', function() {
+          if (!lightsOn[i]) {
+            legendColours.animate(100, '>', 0).fill(colours[i]);
+          } else {
+            legendColours.animate(100, '>', 0).fill('darkgray');
+          }
+        })
+
+        drawing.text(lampTypes[i])
+                .move(width - 250 - boxmarginX + 140, boxmarginY + i * 100 + 32)
+      }
 
       /*geojson.features.forEach(f => {
         dataValue = commuteData[f.properties.ACT_LOCA_2];
