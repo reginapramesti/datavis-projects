@@ -3,6 +3,9 @@
   <head>
     <title>ACT Transport</title>
     <style type="text/css">
+      .clickable {
+        cursor: move;
+      }
     </style>
 
   </head>
@@ -15,7 +18,7 @@
   	<script type="text/javascript" src="data/transport.json"></script>
 
     <script type="text/javascript">
-      var draw = SVG("drawing").size(1000, 1000);
+      var draw = SVG("drawing").size(1200, 1000);
 
       const numCategories = 4;
 
@@ -23,54 +26,45 @@
       var monthArray = new Array(transportData.length / 4);
       var transportArray = new Array(transportData.length / 4);
       var passengersArray = new Array(transportData.length / 4);
-      for (var i = 0; i < transportArray.length; i++) {
+      for (let i = 0; i < transportArray.length; i++) {
         transportArray[i] = new Array(numCategories);
         monthArray[i] = transportData[i * numCategories].month;
         var totalPassengers = 0;
-        for (var j = 0; j < numCategories; j++) {
+        for (let j = 0; j < numCategories; j++) {
           transportArray[i][j] = transportData[i * numCategories + j].avBoardings;
           totalPassengers += transportArray[i][j];
         }
         passengersArray[i] = totalPassengers;
       }
 
-      //draw.circle(500);
-      console.log(transportArray);
-      console.log(monthArray);
-      console.log(passengersArray);
+      var yScale = 4;
+      var xMargin = 650;
+      var barWidth = 30;
+      var barSpacing = 35;
+      var yBottom = 500;
+
+      // clickable timeline
+      var lineYMargin = 150;
+      var lineXMargin = 100;
+      var lineLength = 880;
+      var pointSpacing = 80;
+      draw.line(lineXMargin, yBottom + lineYMargin, lineLength + lineXMargin, yBottom + lineYMargin)
+          .stroke({color: 'blue', width: 10, linecap: 'round'});
 
       // Pie chart
       // Based on tutorial https://danielpataki.com/svg-pie-chart-javascript/
-      var data = {
-        size: 230,
-        sectors: [
-          {
-              percentage: 0.45,
-              label: 'Thing 1'
-          },
-          {
-              percentage: 0.21,
-              label: "Thing Two"
-          },
-          {
-            percentage: 0.11,
-            label: "Another Thing"
-          },
-          {
-              percentage: 0.23,
-              label: "Pineapple"
-          }
-        ]
-      }
+      const chartSize = 400;
+      const margin = 50;
+      const selectOpacity = 0.7;
 
       var sectors = new Array(transportArray.length);
       var colors = [
-          "#61C0BF", "#DA507A", "#BB3D49", "#DB4547"
+          "lightseagreen", "green", "lightcoral", "darkorange"
       ];
 
-      for (var i = 0; i < transportArray.length; i++) {
+      for (let i = 0; i < transportArray.length; i++) {
 
-        var l = data.size / 2;
+        var l = chartSize / 2;
         var a = 0; // Angle
         var aRad = 0; // Angle in Rad
         var z = 0; // Size z
@@ -117,26 +111,174 @@
         })
       }
 
-      console.log(sectors)
-
       //sectors = calculateSectors(data);
-      sectors[0].map(function(sector) {
-          var path = draw.path('M' + sector.L + ',' + sector.L + ' L' + sector.L + ',0 A' + sector.L + ',' + sector.L + ' 1 0,1 ' + sector.X + ', ' + sector.Y + ' z');
+      // sectors[0].map(function(sector) {
+      //     var path = draw.path('M' + (sector.L + margin) + ',' + (sector.L + margin) + ' L' + (sector.L + margin) + ', ' + margin + ' A' + sector.L + ',' + sector.L + ' 1 0,1 ' + (sector.X + margin) + ', ' + (sector.Y + margin) + ' z');
+      //     path.fill(sector.color);
+      //     path.rotate(sector.R, sector.L + margin, sector.L + margin);
+      //     //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
+      //
+      //     path.mouseover(function(){
+      //       path.opacity(selectOpacity);
+      //       //label = drawing.text("This is a text").move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
+      //     })
+      //
+      //     path.mouseout(function(){
+      //       path.opacity(1);
+      //       //label.remove();
+      //     })
+      // });
+
+
+      //var point = draw.circle(10).center(sectors[0][1].L, 10);
+      //point.rotate(sectors[0][1].R, sectors[0][1].L, sectors[0][1].L);
+
+
+      var bars = new Array(transportArray.length);
+
+      for (let i = 0; i < sectors.length; i++) {
+        let cumulativeHeight = 0;
+        bars[i] = new Array(numCategories);
+        // total = transportArray[i][0] + transportArray[i][1] + transportArray[i][2] + transportArray[i][3];
+        // console.log(total);
+        // draw.rect(barWidth, total * yScale).move(xMargin + i * barSpacing, yBottom - total * yScale).fill('black');
+        for (var j = 0; j < sectors[i].length; j++) {
+          var value = transportArray[i][j];
+          bars[i][j] = draw.rect(barWidth, value * yScale)
+              .move(xMargin + i * barSpacing, yBottom - value * yScale - cumulativeHeight * yScale)
+              .fill(colors[j])
+              .stroke({color: 'black', width: 0.5});
+          cumulativeHeight += value;
+        }
+
+      }
+
+      // X and y axes
+      const marginOffset = 10;
+      draw.line(xMargin - marginOffset, yBottom, xMargin - marginOffset, yBottom - 500)
+          .stroke({color: 'black', width: 2});
+      draw.line(xMargin - marginOffset, yBottom, xMargin + barSpacing * sectors.length + 20, yBottom)
+          .stroke({color: 'black', width: 2});
+
+      // The timeline part
+      for (let i = 0; i < monthArray.length; i++) {
+        let scrollbar = draw.circle(25)
+            .center(lineXMargin + i * pointSpacing, lineYMargin + yBottom)
+            .fill('white')
+            .stroke({color:'blue', width: 5})
+            .addClass('clickable');
+        scrollbar.click(function() {
+          draw.circle(chartSize).center(chartSize / 2 + margin, chartSize / 2 + margin).fill('white');
+          sectors[i].map(function(sector, key) {
+              let path = draw.path('M' + (sector.L + margin) + ',' + (sector.L + margin) + ' L' + (sector.L + margin) + ', ' + margin + ' A' + sector.L + ',' + sector.L + ' 1 0,1 ' + (sector.X + margin) + ', ' + (sector.Y + margin) + ' z');
+              path.fill(sector.color);
+              path.rotate(sector.R, sector.L + margin, sector.L + margin);
+              //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
+
+              path.mouseover(function(){
+                path.opacity(selectOpacity);
+                for (let j = 0; j < transportArray.length; j++) {
+                  for (let k = 0; k < numCategories; k++) {
+                    if (k != key) {
+                      bars[j][k].opacity(0);
+                    } else {
+                      bars[j][k].move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale);
+                    }
+                  }
+                }
+              })
+
+              path.mouseout(function(){
+                path.opacity(1);
+                for (let j = 0; j < transportArray.length; j++) {
+                  let cumulativeHeight = 0;
+                  for (let k = 0; k < numCategories; k++) {
+                    if (k != key) {
+                      bars[j][k].opacity(1);
+                      cumulativeHeight += transportArray[j][k];
+                    } else {
+                      bars[j][k].move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale - cumulativeHeight * yScale);
+                    }
+                  }
+                }
+              })
+          });
+
+          var midCircle = draw.circle(chartSize * 0.28 * 2);
+          midCircle.fill('white');
+          midCircle.center(chartSize * 0.5 + margin, chartSize * 0.5 + margin);
+
+          // for (let j = 0; j < numCategories; j++) {
+          //   bars[i][j].opacity(selectOpacity);
+          // }
+
+
+          // Change this to just be moved, instead of creating on everytime.
+          let rectOffsetX = 30;
+          let rectOffsetY = 70;
+          draw.rect(lineLength + 100, 50)
+              .move(lineXMargin - rectOffsetX, lineYMargin + yBottom - rectOffsetY)
+              .fill('white');
+          draw.circle(20)
+              .fill('blue')
+              .center(lineXMargin + i * pointSpacing, lineYMargin + yBottom - 50);
+          let leftVertex = (lineXMargin + i * pointSpacing - 10) + ',' + (lineYMargin + yBottom - 48) + ' ';
+          let rightVertex = (lineXMargin + i * pointSpacing + 10) + ',' + (lineYMargin + yBottom - 48) + ' ';
+          let bottomVertex = (lineXMargin + i * pointSpacing) + ',' + (lineYMargin + yBottom - 28) + ' ';
+          draw.polygon(leftVertex + rightVertex + bottomVertex).fill('blue');
+
+        })
+      }
+
+      sectors[0].map(function(sector, key) {
+          let path = draw.path('M' + (sector.L + margin) + ',' + (sector.L + margin) + ' L' + (sector.L + margin) + ', ' + margin + ' A' + sector.L + ',' + sector.L + ' 1 0,1 ' + (sector.X + margin) + ', ' + (sector.Y + margin) + ' z');
           path.fill(sector.color);
-          path.rotate(sector.R, sector.L, sector.L);
+          path.rotate(sector.R, sector.L + margin, sector.L + margin);
           //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
 
+          path.mouseover(function(){
+            path.opacity(selectOpacity);
+            for (let j = 0; j < transportArray.length; j++) {
+              for (let k = 0; k < numCategories; k++) {
+                if (k != key) {
+                  bars[j][k].opacity(0);
+                } else {
+                  bars[j][k].move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale);
+                }
+              }
+            }
+          })
+
+          path.mouseout(function(){
+            path.opacity(1);
+            for (let j = 0; j < transportArray.length; j++) {
+              let cumulativeHeight = 0;
+              for (let k = 0; k < numCategories; k++) {
+                if (k != key) {
+                  bars[j][k].opacity(1);
+                  cumulativeHeight += transportArray[j][k];
+                } else {
+                  bars[j][k].move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale - cumulativeHeight * yScale);
+                }
+              }
+            }
+          })
       });
 
-      var midCircle = draw.circle(data.size * 0.28 * 2);
+
+      var midCircle = draw.circle(chartSize * 0.28 * 2);
       midCircle.fill('white');
-      midCircle.center(data.size * 0.5, data.size * 0.5);
+      midCircle.center(chartSize * 0.5 + margin, chartSize * 0.5 + margin);
 
 
-      var point = draw.circle(10).center(sectors[0][1].L, 10);
-      point.rotate(sectors[0][1].R, sectors[0][1].L, sectors[0][1].L);
+      draw.circle(20)
+          .fill('blue')
+          .center(lineXMargin, lineYMargin + yBottom - 50);
+      let leftVertex = (lineXMargin - 10) + ',' + (lineYMargin + yBottom - 48) + ' ';
+      let rightVertex = (lineXMargin + 10) + ',' + (lineYMargin + yBottom - 48) + ' ';
+      let bottomVertex = (lineXMargin) + ',' + (lineYMargin + yBottom - 28) + ' ';
+      draw.polygon(leftVertex + rightVertex + bottomVertex).fill('blue');
 
-      console.log(point.matrix());
 
     </script>
   </body>

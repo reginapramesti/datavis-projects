@@ -18,55 +18,42 @@
     <script type="text/javascript">
       var draw = SVG("drawing").size(1000, 1000);
 
-      const numCategories = 13;
+      const numCategories = 11;
       var separation = new Array(numCategories);
       for (var i = 0; i < separation.length; i++) {
         separation[i] = 1;
       }
-      //var separation = [13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      //var separation = [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
 
       console.log(separation);
 
+      const maxCircleSize = 840;
+      const gridCirclesCt = 10;
+      const circleIncrements = 84;
+      const margin = 100;
+      const gridCenter = (maxCircleSize / 2) + margin;
+
       var corners = [
-        {x: 350, y: 0},
-        {x: 512.653110215319, y: 40.090391021376526},
-        {x: 638.0443530627797, y: 151.17733864409536},
-        {x: 697.4481059343188, y: 307.8121619106368},
-        {x: 677.2556849398952, y: 474.1117104648875},
-        {x: 582.0929303842781, y: 611.9787618598855},
-        {x: 433.7604825006452, y: 689.8296360991183},
-        {x: 266.2395174993548, y: 689.8296360991183},
-        {x: 117.90706961572164, y: 611.9787618598855},
-        {x: 22.744315060104782, y: 474.1117104648875},
-        {x: 2.5518940656811537, y: 307.81216191063663},
-        {x: 61.95564693722014, y: 151.17733864409556},
-        {x: 187.34688978468108, y: 40.090391021376526}
+        {x: 420 + margin, y: 0 + margin},
+        {x: 647.0691433313509 + margin, y: 66.67351621090383 + margin},
+        {x: 802.0454380488977 + margin, y: 245.52569453920776 + margin},
+        {x: 835.7250055899917 + margin, y: 479.77223207477977 + margin},
+        {x: 737.4148212287885 + margin, y: 695.0415082570197 + margin},
+        {x: 538.3276738734005 + margin, y: 822.9870489180888 + margin},
+        {x: 301.67232612659967 + margin, y: 822.9870489180888 + margin},
+        {x: 102.58517877121153 + margin, y: 695.0415082570197 + margin},
+        {x: 4.274994410008276 + margin, y: 479.77223207477977 + margin},
+        {x: 37.954561951102335 + margin, y: 245.52569453920742 + margin},
+        {x: 192.9308566686489 + margin, y: 66.67351621090377 + margin}
       ];
-
-      /*// Prepare the data by putting them into arrays
-      var transportArray = new Array(transportData.length / 4);
-      var passengersArray = new Array(transportData.length / 4);
-      for (var i = 0; i < transportArray.length; i++) {
-        transportArray[i] = new Array(numCategories);
-        var totalPassengers = 0;
-        for (var j = 0; j < numCategories; j++) {
-          transportArray[i][j] = 1;
-        }
-        passengersArray[i] = 13;
-      }
-
-      console.log(transportArray);
-      console.log(passengersArray);*/
 
       // Pie chart
       // Based on tutorial https://danielpataki.com/svg-pie-chart-javascript/
-      var maxCircleSize = 700;
-      var circleIncrements = 70;
 
       var sectors = [];
-      var colors = 'white';
+      var colors = 'none';
 
-      var l = maxCircleSize / 2;
+      var l = (maxCircleSize / 2);
       var a = 0; // Angle
       var aRad = 0; // Angle in Rad
       var z = 0; // Size z
@@ -77,15 +64,6 @@
       var R = 0; // Rotation
 
       separation.map(function(item, key) {
-        // var l = maxCircleSize / 2;
-        // var a = 0; // Angle
-        // var aRad = 0; // Angle in Rad
-        // var z = 0; // Size z
-        // var x = 0; // Side x
-        // var y = 0; // Side y
-        // var X = 0; // SVG X coordinate
-        // var Y = 0; // SVG Y coordinate
-        // var R = 0; // Rotation
 
         let percentage = item / numCategories;
         a = 360 * percentage;
@@ -122,82 +100,62 @@
 
       })
 
-      /*for (var i = 0; i < numCategories; i++) {
-
-        sectors[i] = [];
-        transportArray[i].map(function(item, key) {
-          let percentage = item / passengersArray[i];
-          a = 360 * percentage;
-          aCalc = (a > 180) ? 360 - a : a;
-          aRad = aCalc * Math.PI / 180;
-          z = Math.sqrt(2 * l * l - (2 * l * l * Math.cos(aRad)));
-          if (aCalc <= 90) {
-            x = l * Math.sin(aRad);
-          } else {
-            x = l * Math.sin((180 - aCalc) * Math.PI / 180 );
-          }
-
-          y = Math.sqrt(z * z - x * x);
-          Y = y;
-
-          if (a <= 180) {
-            X = l + x;
-            arcSweep = 0;
-          } else {
-            X = l - x;
-            arcSweep = 1;
-          }
-
-          sectors[i].push({
-            percentage: percentage,
-            color: colors,
-            arcSweep: arcSweep,
-            L: l,
-            X: X,
-            Y: Y,
-            R: R
-          });
-          R = R + a;
-        })
-      }*/
-
       console.log(sectors)
 
-      //sectors = calculateSectors(data);
       sectors.map(function(sector) {
-          var path = draw.path('M' + sector.L + ',' + sector.L + ' L' + sector.L + ',0 A' + sector.L + ',' + sector.L + ' 1 0,1 ' + sector.X + ', ' + sector.Y + ' z');
+          var path = draw.path('M' + (sector.L + margin) + ',' + (sector.L + margin) + ' L' + (sector.L + margin) + ',' + margin + 'A' + sector.L + ',' + sector.L + ' 1 0,1 ' + (sector.X + margin) + ', ' + (sector.Y + margin) + ' z');
           path.fill(sector.color);
           path.stroke({color: 'black', width: 0.2});
-          path.rotate(sector.R, sector.L, sector.L);
-          //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
+          path.rotate(sector.R, sector.L + margin, sector.L + margin);
 
       });
 
-      for (var i = 0; i < 10; i++) {
+      for (var i = 0; i < gridCirclesCt; i++) {
         var gridLines = draw.circle(circleIncrements * i);
-        gridLines.center(maxCircleSize * 0.5, maxCircleSize * 0.5);
-        gridLines.attr({
-          fill: 'white',
-          'fill-opacity': 0
-        });
+        gridLines.center(maxCircleSize * 0.5 + margin, maxCircleSize * 0.5 + margin);
+        gridLines.fill('none');
 
         gridLines.stroke({color: 'black', width: 0.2});
       }
 
-      // var midCircle = draw.circle(maxCircleSize * 0.28 * 2);
-      // midCircle.fill('white');
-      // midCircle.center(maxCircleSize * 0.5, maxCircleSize * 0.5);
+      function pointCoordinates(x1, y1, x2, y2, value, maxValue) {
+        var xCoord = x1 + ((x2 - x1) * value / maxValue);
+        var yCoord = y1 + ((y2 - y1) * value / maxValue);
+        return {x: xCoord, y: yCoord};
+      }
 
-
-      // var point = draw.circle(10).center(sectors[0][1].L, 10);
-      // point.rotate(sectors[0][1].R, sectors[0][1].L, sectors[0][1].L);
-      //
-      // console.log(point.matrix());
-
-      corners.map(function(corner) {
+      /*corners.map(function(corner) {
         var circle = draw.circle(5);
         circle.center(corner.x, corner.y);
-      })
+      })*/
+
+      const maxValue = 320;
+
+      var circleCenter = pointCoordinates(gridCenter, gridCenter, corners[0].x, corners[0].y, crimeData[2].assault, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);//.rotate(sectors[0].R, gridCenter, gridCenter);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[1].x, corners[1].y, crimeData[2].sexualAssault, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[2].x, corners[2].y, crimeData[2].offencesPerson, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[3].x, corners[3].y, crimeData[2].burglary, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[4].x, corners[4].y, crimeData[2].robbery, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[5].x, corners[5].y, crimeData[2].motorVehicleTheft, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[6].x, corners[6].y, crimeData[2].propertyDmg, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[7].x, corners[7].y, crimeData[2].offencesOther, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[8].x, corners[8].y, crimeData[2].trafficInfringement, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[9].x, corners[9].y, crimeData[2].theftGeneral, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[10].x, corners[10].y, crimeData[2].roadCollision, maxValue);
+      draw.circle(5).center(circleCenter.x, circleCenter.y);
+      /*circleCenter = pointCoordinates(gridCenter, gridCenter, corners[1].x, corners[1].y, crimeData[0].assault, 350);
+      draw.circle(5).center(circleCenter.x, circleCenter.y).rotate(sectors[0].R, gridCenter, gridCenter);*/
+
 
     </script>
   </body>
