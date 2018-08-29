@@ -3,158 +3,245 @@
   <head>
     <title>ACT Crimes</title>
     <style type="text/css">
+      svg {
+        background-color: #fff
+      }
+
+      .clickable {
+        cursor: pointer;
+      }
+
+      .hugeNumber {
+        font-size: 10em;
+      }
+
+      .largeText {
+        font-size: 2em;
+      }
     </style>
 
   </head>
   <body>
-    <h1>ACT Crimes</h1>
+    <h1>ACT Crime Statistics (as of March 2017)</h1>
     <div id="drawing"></div>
 
     <!-- All the scripts needed to get the drawingualisation working -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
   	<script type="text/javascript" src="data/crime.json"></script>
-    <script type="text/javascript" src="../transport/data/transport.json"></script>
+  	<script type="text/javascript" src="lib/chroma.min.js"></script>
+  	<script src="https://d3js.org/d3-array.v1.min.js"></script>
+  	<script src="https://d3js.org/d3-geo.v1.min.js"></script>
+  	<script type="text/javascript" src="data/suburbs.geojson.json"></script>
+  	<script type="text/javascript" src="data/commute.json"></script>
 
     <script type="text/javascript">
-      var draw = SVG("drawing").size(1000, 1000);
+      var width = 1200;
+      var height = 1000;
+      var draw = SVG("drawing").size(width, height);
 
-      const numCategories = 11;
-      var separation = new Array(numCategories);
-      for (var i = 0; i < separation.length; i++) {
-        separation[i] = 1;
-      }
-      //var separation = [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+      var projection = d3.geoMercator()
+          .scale(1)
+          .translate([400,600]);
 
-      console.log(separation);
+      var cs = chroma.scale(['#f5fffa','#d5e3ef','#b4c7e9','#8fade9','#6292ec','#5074dd','#4059c9','#2f3db2','#1c2199','#000080']);
+      //filter the geojson to include only those suburbs in the bike data list
+      geojson.features = geojson.features.filter(g => crimeData.some(data => data.suburb === g.properties.ACT_LOCA_2));
 
-      const maxCircleSize = 840;
-      const gridCirclesCt = 10;
-      const circleIncrements = 84;
-      const margin = 100;
-      const gridCenter = (maxCircleSize / 2) + margin;
+      projection.fitExtent([[0,20],[900,900]], geojson)
 
-      var corners = [
-        {x: 420 + margin, y: 0 + margin},
-        {x: 647.0691433313509 + margin, y: 66.67351621090383 + margin},
-        {x: 802.0454380488977 + margin, y: 245.52569453920776 + margin},
-        {x: 835.7250055899917 + margin, y: 479.77223207477977 + margin},
-        {x: 737.4148212287885 + margin, y: 695.0415082570197 + margin},
-        {x: 538.3276738734005 + margin, y: 822.9870489180888 + margin},
-        {x: 301.67232612659967 + margin, y: 822.9870489180888 + margin},
-        {x: 102.58517877121153 + margin, y: 695.0415082570197 + margin},
-        {x: 4.274994410008276 + margin, y: 479.77223207477977 + margin},
-        {x: 37.954561951102335 + margin, y: 245.52569453920742 + margin},
-        {x: 192.9308566686489 + margin, y: 66.67351621090377 + margin}
-      ];
+      var mapPath = d3.geoPath(projection);
 
-      // Pie chart
-      // Based on tutorial https://danielpataki.com/svg-pie-chart-javascript/
+      var display = draw.group();
 
-      var sectors = [];
-      var colors = 'none';
+      var label;
+      var suburbs = [];
 
-      var l = (maxCircleSize / 2);
-      var a = 0; // Angle
-      var aRad = 0; // Angle in Rad
-      var z = 0; // Size z
-      var x = 0; // Side x
-      var y = 0; // Side y
-      var X = 0; // SVG X coordinate
-      var Y = 0; // SVG Y coordinate
-      var R = 0; // Rotation
 
-      separation.map(function(item, key) {
-
-        let percentage = item / numCategories;
-        a = 360 * percentage;
-        aCalc = (a > 180) ? 360 - a : a;
-        aRad = aCalc * Math.PI / 180;
-        z = Math.sqrt(2 * l * l - (2 * l * l * Math.cos(aRad)));
-        if (aCalc <= 90) {
-          x = l * Math.sin(aRad);
-        } else {
-          x = l * Math.sin((180 - aCalc) * Math.PI / 180 );
+      var labels = ["Homicide", "Assault", "Sexual assault", "Offences against a person",
+                    "Burglary", "Robbery", "Motor vehicle theft", "Property damage",
+                    "Other offences", "Traffic infringement notices", "Theft (excluding motor vehicles)",
+                    "Road fatality", "Road collision with injury"];
+      geojson.features.forEach(f => {
+        let dataValue;
+        let suburb;
+        let label;
+        for (let i = 0; i < crimeData.length; i++) {
+          if (crimeData[i].suburb === f.properties.ACT_LOCA_2) {
+            dataValue = crimeData[i].trafficInfringement;
+            suburb = crimeData[i].suburb;
+            label = labels[9];
+          }
         }
 
-        y = Math.sqrt(z * z - x * x);
-        Y = y;
+    		var sg = draw.group();
+    		var outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
+    		outline.fill(cs(dataValue / 120).hex());
+        outline.stroke({color: 'darkblue'});
+        outline.addClass('clickable');
 
-        if (a <= 180) {
-          X = l + x;
-          arcSweep = 0;
-        } else {
-          X = l - x;
-          arcSweep = 1;
+        outline.on('changeValues', function(e) {
+          label = labels[e.detail.index];
+          for (let i = 0; i < crimeData.length; i++) {
+            if (crimeData[i].suburb === f.properties.ACT_LOCA_2) {
+              let max = 100;
+              switch (e.detail.index) {
+                case 0:
+                  dataValue = crimeData[i].homicide;
+                  max = 1;
+                  break;
+                case 1:
+                  dataValue = crimeData[i].assault;
+                  max = 50;
+                  break;
+                case 2:
+                  dataValue = crimeData[i].sexualAssault;
+                  max = 10;
+                  break;
+                case 3:
+                  dataValue = crimeData[i].offencesPerson;
+                  max = 10;
+                  break;
+                case 4:
+                  dataValue = crimeData[i].burglary;
+                  max = 20;
+                  break;
+                case 5:
+                  dataValue = crimeData[i].robbery;
+                  max = 10;
+                  break;
+                case 6:
+                  dataValue = crimeData[i].motorVehicleTheft;
+                  max = 20;
+                  break;
+                case 7:
+                  dataValue = crimeData[i].propertyDmg;
+                  break;
+                case 8:
+                  dataValue = crimeData[i].offencesOther;
+                  break;
+                case 9:
+                  dataValue = crimeData[i].trafficInfringement;
+                  break;
+                case 10:
+                  dataValue = crimeData[i].theftGeneral;
+                  max = 50;
+                  break;
+                case 11:
+                  dataValue = crimeData[i].roadFatality;
+                  max = 1;
+                  break;
+                case 12:
+                  dataValue = crimeData[i].roadCollision;
+                  max = 10;
+                  break;
+
+              }
+              suburb = crimeData[i].suburb;
+          		outline.fill(cs(dataValue / max).hex());
+            }
+          }
+        })
+
+        outline.mouseover(function() {
+          outline.opacity(0.5);
+        })
+        outline.mouseout(function() {
+          outline.opacity(1);
+        })
+
+        outline.click(function() {
+          display.remove();
+          display = draw.group();
+          let boxwidth = 550;
+          let boxheight = 360;
+          display.rect(boxwidth, boxheight)
+                  .move(width - boxwidth - 20, height - boxheight - 20)
+                  .fill('white')
+                  .stroke('black');
+
+          display.text(dataValue + "")
+                  .move(width - boxwidth - 20 + 275, height - boxheight - 20 + 200)
+                  .fill('black')
+                  .attr({'text-anchor': 'middle'})
+                  .addClass('hugeNumber')
+          display.text(label + " in")
+                  .move(width - boxwidth - 20 + 275, height - boxheight - 20 + 250)
+                  .fill('black')
+                  .attr({'text-anchor': 'middle'})
+                  .addClass('largeText')
+          display.text("" + suburb)
+                  .move(width - boxwidth - 20 + 275, height - boxheight - 20 + 290)
+                  .fill('black')
+                  .attr({'text-anchor': 'middle'})
+                  .addClass('largeText')
+
+          let xOffset = 0;
+          let yOffset = 0
+          let delay = 0;
+          for (let i = 0; i < dataValue; i++) {
+            if (i % 5 == 4) {
+              // horizontal line
+              draw.line(-40 + width - boxwidth - 20 + xOffset, 30 + height - boxheight - 20 + yOffset, -40 + width - boxwidth - 20 + xOffset + 50, 30 + height - boxheight - 20 + yOffset).animate(10, '<>', delay)
+                  .stroke({color: 'black', width: 5, linecap: 'round'})
+                  .opacity(0.4);
+            } else {
+              // vertical line
+              draw.line(10 + width - boxwidth - 20 + xOffset, height - boxheight - 20 + yOffset, 10 + width - boxwidth - 20 + xOffset, 60 + height - boxheight - 20 + yOffset).animate(10, '>', delay)
+                  //.move(10 + width - boxwidth - 20 + xOffset, height - boxheight - 20 + yOffset)
+                  .stroke({color: 'black', width: 5})
+                  .opacity(0.4);
+            }
+
+            xOffset += 10;
+            if (xOffset >= 550) {
+              xOffset = 0;
+              yOffset += 60;
+            }
+            delay += 10;
+          }
+        })
+
+        suburbs.push(outline);
+    	});
+
+      var boxmarginX = 80;
+      var boxmarginY = 50;
+      var buttons = [];
+      for (let i = 0; i < 13; i++) {
+
+        draw.text(labels[i])
+                .move(width - 220 - boxmarginX + 140, boxmarginY + i * 40 + 15)
+                .attr({'text-anchor': 'middle'})
+        let button = draw.rect(280, 40)
+                          .fill('white')
+                          .attr({"fill-opacity": 0})
+                          .stroke({color: 'black', width: 1})
+                          .move(width - 220 - boxmarginX, boxmarginY + i * 40)
+                          .addClass('clickable');
+
+        button.click(function() {
+          suburbs.forEach(suburb => {
+            suburb.fire('changeValues', {index: i});
+          })
+          toggleActive(i);
+        })
+
+        buttons.push(button);
+
+      }
+
+      // The default data displayed is traffic infringement
+      buttons[9].fill('lightgray').attr({"fill-opacity": 0.3});
+
+      function toggleActive(index) {
+        for (let i = 0; i < buttons.length; i++) {
+          if (i != index) {
+            buttons[i].fill('white').attr({"fill-opacity": 0})
+          } else {
+            buttons[i].fill('lightgray').attr({"fill-opacity": 0.3})
+          }
         }
-
-        sectors.push({
-          percentage: percentage,
-          color: colors,
-          arcSweep: arcSweep,
-          L: l,
-          X: X,
-          Y: Y,
-          R: R
-        });
-        R = R + a;
-
-      })
-
-      console.log(sectors)
-
-      sectors.map(function(sector) {
-          var path = draw.path('M' + (sector.L + margin) + ',' + (sector.L + margin) + ' L' + (sector.L + margin) + ',' + margin + 'A' + sector.L + ',' + sector.L + ' 1 0,1 ' + (sector.X + margin) + ', ' + (sector.Y + margin) + ' z');
-          path.fill(sector.color);
-          path.stroke({color: 'black', width: 0.2});
-          path.rotate(sector.R, sector.L + margin, sector.L + margin);
-
-      });
-
-      for (var i = 0; i < gridCirclesCt; i++) {
-        var gridLines = draw.circle(circleIncrements * i);
-        gridLines.center(maxCircleSize * 0.5 + margin, maxCircleSize * 0.5 + margin);
-        gridLines.fill('none');
-
-        gridLines.stroke({color: 'black', width: 0.2});
       }
-
-      function pointCoordinates(x1, y1, x2, y2, value, maxValue) {
-        var xCoord = x1 + ((x2 - x1) * value / maxValue);
-        var yCoord = y1 + ((y2 - y1) * value / maxValue);
-        return {x: xCoord, y: yCoord};
-      }
-
-      /*corners.map(function(corner) {
-        var circle = draw.circle(5);
-        circle.center(corner.x, corner.y);
-      })*/
-
-      const maxValue = 320;
-
-      var circleCenter = pointCoordinates(gridCenter, gridCenter, corners[0].x, corners[0].y, crimeData[2].assault, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);//.rotate(sectors[0].R, gridCenter, gridCenter);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[1].x, corners[1].y, crimeData[2].sexualAssault, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[2].x, corners[2].y, crimeData[2].offencesPerson, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[3].x, corners[3].y, crimeData[2].burglary, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[4].x, corners[4].y, crimeData[2].robbery, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[5].x, corners[5].y, crimeData[2].motorVehicleTheft, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[6].x, corners[6].y, crimeData[2].propertyDmg, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[7].x, corners[7].y, crimeData[2].offencesOther, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[8].x, corners[8].y, crimeData[2].trafficInfringement, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[9].x, corners[9].y, crimeData[2].theftGeneral, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      circleCenter = pointCoordinates(gridCenter, gridCenter, corners[10].x, corners[10].y, crimeData[2].roadCollision, maxValue);
-      draw.circle(5).center(circleCenter.x, circleCenter.y);
-      /*circleCenter = pointCoordinates(gridCenter, gridCenter, corners[1].x, corners[1].y, crimeData[0].assault, 350);
-      draw.circle(5).center(circleCenter.x, circleCenter.y).rotate(sectors[0].R, gridCenter, gridCenter);*/
 
 
     </script>
