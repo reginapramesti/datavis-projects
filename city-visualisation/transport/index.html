@@ -4,7 +4,7 @@
     <title>ACT Transport</title>
     <style type="text/css">
       .clickable {
-        cursor: move;
+        cursor: pointer;
       }
 
     </style>
@@ -112,37 +112,13 @@
         })
       }
 
-      //sectors = calculateSectors(data);
-      // sectors[0].map(function(sector) {
-      //     var path = draw.path('M' + (sector.L + margin) + ',' + (sector.L + margin) + ' L' + (sector.L + margin) + ', ' + margin + ' A' + sector.L + ',' + sector.L + ' 1 0,1 ' + (sector.X + margin) + ', ' + (sector.Y + margin) + ' z');
-      //     path.fill(sector.color);
-      //     path.rotate(sector.R, sector.L + margin, sector.L + margin);
-      //     //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
-      //
-      //     path.mouseover(function(){
-      //       path.opacity(selectOpacity);
-      //       //label = drawing.text("This is a text").move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
-      //     })
-      //
-      //     path.mouseout(function(){
-      //       path.opacity(1);
-      //       //label.remove();
-      //     })
-      // });
-
-
-      //var point = draw.circle(10).center(sectors[0][1].L, 10);
-      //point.rotate(sectors[0][1].R, sectors[0][1].L, sectors[0][1].L);
-
 
       var bars = new Array(transportArray.length);
       var textSpacing = 40;
       for (let i = 0; i < sectors.length; i++) {
         let cumulativeHeight = 0;
         bars[i] = new Array(numCategories);
-        // total = transportArray[i][0] + transportArray[i][1] + transportArray[i][2] + transportArray[i][3];
-        // console.log(total);
-        // draw.rect(barWidth, total * yScale).move(xMargin + i * barSpacing, yBottom - total * yScale).fill('black');
+
         for (var j = 0; j < sectors[i].length; j++) {
           var value = transportArray[i][j];
           bars[i][j] = draw.rect(barWidth, value * yScale)
@@ -173,23 +149,29 @@
       var ticksOffset = marginOffset + 5;
       var labelsOffsetX = 5;
       var labelsOffsetY = 5;
-      var ylabels = new Array(ticks.length);
-      for (let i = 0; i < ylabels.length; i++) {
+      var ylabels = [];
+      for (let i = 0; i < ticks.length; i++) {
         draw.line(0, 0, 10, 0)
             .stroke({color: 'black', width: 2})
             .move(xMargin - ticksOffset, yBottom - ticks[i] * yScale);
 
-        draw.text(ticks[i] + "")
+        ylabels.push(draw.text(ticks[i] + "")
             .move(xMargin - ticksOffset - labelsOffsetX, yBottom - ticks[i] * yScale - labelsOffsetY)
-            .attr({'text-anchor': "end"});
+            .attr({'text-anchor': "end"}));
       }
 
       // The timeline part
+      var circles = [];
+
       for (let i = 0; i < monthArray.length; i++) {
         let offset = 25;
+        if (i % 2 == 0)
+          offset = -40;
+        else
+          offset = 25;
+
         draw.text(monthArray[i])
             .move(lineXMargin + i * pointSpacing, lineYMargin + yBottom + offset)
-            //.rotate(45, xMargin + i * pointSpacing + textOffsetX, yBottom + textOffsetY)
             .attr({'text-anchor': "middle"});
 
         let scrollbar = draw.circle(25)
@@ -198,125 +180,19 @@
             .stroke({color:'blue', width: 5})
             .addClass('clickable');
 
-        scrollbar.mouseover(function() {
-          scrollbar.fill('lightblue');
-        });
-
-        scrollbar.mouseout(function() {
-          scrollbar.fill('white');
-        })
-
         scrollbar.click(function() {
           draw.circle(chartSize).center(chartSize / 2 + margin, chartSize / 2 + margin).fill('white');
-          sectors[i].map(function(sector, key) {
-              let path = draw.path('M' + (sector.L + margin) + ',' + (sector.L + margin) + ' L' + (sector.L + margin) + ', ' + margin + ' A' + sector.L + ',' + sector.L + ' 1 0,1 ' + (sector.X + margin) + ', ' + (sector.Y + margin) + ' z');
-              path.fill(sector.color);
-              path.rotate(sector.R, sector.L + margin, sector.L + margin);
-              //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
-
-              path.mouseover(function(){
-                path.opacity(selectOpacity);
-                for (let j = 0; j < transportArray.length; j++) {
-                  for (let k = 0; k < numCategories; k++) {
-                    if (k != key) {
-                      bars[j][k].opacity(0);
-                    } else {
-                      bars[j][k].move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale);
-                    }
-                  }
-                }
-              })
-
-              path.mouseout(function(){
-                path.opacity(1);
-                for (let j = 0; j < transportArray.length; j++) {
-                  let cumulativeHeight = 0;
-                  for (let k = 0; k < numCategories; k++) {
-                    if (k != key) {
-                      bars[j][k].opacity(1);
-                      cumulativeHeight += transportArray[j][k];
-                    } else {
-                      bars[j][k].move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale - cumulativeHeight * yScale);
-                    }
-                  }
-                }
-              })
-          });
-
-          var midCircle = draw.circle(chartSize * 0.28 * 2);
-          midCircle.fill('white');
-          midCircle.center(chartSize * 0.5 + margin, chartSize * 0.5 + margin);
-
-          // for (let j = 0; j < numCategories; j++) {
-          //   bars[i][j].opacity(selectOpacity);
-          // }
-
-
-          // Change this to just be moved, instead of creating on everytime.
-          let rectOffsetX = 30;
-          let rectOffsetY = 70;
-          draw.rect(lineLength + 100, 50)
-              .move(lineXMargin - rectOffsetX, lineYMargin + yBottom - rectOffsetY)
-              .fill('white');
-          draw.circle(20)
-              .fill('blue')
-              .center(lineXMargin + i * pointSpacing, lineYMargin + yBottom - 50);
-          let leftVertex = (lineXMargin + i * pointSpacing - 10) + ',' + (lineYMargin + yBottom - 48) + ' ';
-          let rightVertex = (lineXMargin + i * pointSpacing + 10) + ',' + (lineYMargin + yBottom - 48) + ' ';
-          let bottomVertex = (lineXMargin + i * pointSpacing) + ',' + (lineYMargin + yBottom - 28) + ' ';
-          draw.polygon(leftVertex + rightVertex + bottomVertex).fill('blue');
-
+          generatePieChart(i);
+          toggleActive(i);
         })
+
+        circles.push(scrollbar);
       }
 
-      sectors[0].map(function(sector, key) {
-          let path = draw.path('M' + (sector.L + margin) + ',' + (sector.L + margin) + ' L' + (sector.L + margin) + ', ' + margin + ' A' + sector.L + ',' + sector.L + ' 1 0,1 ' + (sector.X + margin) + ', ' + (sector.Y + margin) + ' z');
-          path.fill(sector.color);
-          path.rotate(sector.R, sector.L + margin, sector.L + margin);
-          //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
+      generatePieChart(0);
+      circles[0].fill('blue');
 
-          path.mouseover(function(){
-            path.opacity(selectOpacity);
-            for (let j = 0; j < transportArray.length; j++) {
-              for (let k = 0; k < numCategories; k++) {
-                if (k != key) {
-                  bars[j][k].opacity(0);
-                } else {
-                  bars[j][k].move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale);
-                }
-              }
-            }
-          })
-
-          path.mouseout(function(){
-            path.opacity(1);
-            for (let j = 0; j < transportArray.length; j++) {
-              let cumulativeHeight = 0;
-              for (let k = 0; k < numCategories; k++) {
-                if (k != key) {
-                  bars[j][k].opacity(1);
-                  cumulativeHeight += transportArray[j][k];
-                } else {
-                  bars[j][k].move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale - cumulativeHeight * yScale);
-                }
-              }
-            }
-          })
-      });
-
-
-      var midCircle = draw.circle(chartSize * 0.28 * 2);
-      midCircle.fill('white');
-      midCircle.center(chartSize * 0.5 + margin, chartSize * 0.5 + margin);
-
-
-      draw.circle(20)
-          .fill('blue')
-          .center(lineXMargin, lineYMargin + yBottom - 50);
-      let leftVertex = (lineXMargin - 10) + ',' + (lineYMargin + yBottom - 48) + ' ';
-      let rightVertex = (lineXMargin + 10) + ',' + (lineYMargin + yBottom - 48) + ' ';
-      let bottomVertex = (lineXMargin) + ',' + (lineYMargin + yBottom - 28) + ' ';
-      draw.polygon(leftVertex + rightVertex + bottomVertex).fill('blue');
+      // This is the legend for the pie chart
 
       var legendBoxWidth = 420;
       var legendBoxHeight = 75;
@@ -328,21 +204,95 @@
           .stroke({color: 'black'});
 
       draw.line(0, 0, 30, 0)
-          .stroke({color: colors[0], width: 7,linecap: 'round'})
+          .stroke({color: colors[0], width: 10,linecap: 'round'})
           .move(legendMarginX + 20, legendMarginY + 20)
       draw.text(transportData[0].serviceType).move(legendMarginX + 65, legendMarginY + 15);
       draw.line(0, 0, 30, 0)
-          .stroke({color: colors[1], width: 7,linecap: 'round'})
+          .stroke({color: colors[1], width: 10,linecap: 'round'})
           .move(legendMarginX + 250, legendMarginY + 20)
       draw.text(transportData[1].serviceType).move(legendMarginX + 295, legendMarginY + 15);
       draw.line(0, 0, 30, 0)
-          .stroke({color: colors[2], width: 7,linecap: 'round'})
+          .stroke({color: colors[2], width: 10,linecap: 'round'})
           .move(legendMarginX + 20, legendMarginY + 55)
       draw.text(transportData[2].serviceType).move(legendMarginX + 65, legendMarginY + 50);
       draw.line(0, 0, 30, 0)
-          .stroke({color: colors[3], width: 7,linecap: 'round'})
+          .stroke({color: colors[3], width: 10,linecap: 'round'})
           .move(legendMarginX + 250, legendMarginY + 55)
       draw.text(transportData[3].serviceType).move(legendMarginX + 295, legendMarginY + 50);
+
+      function generatePieChart(index) {
+        sectors[index].map(function(sector, key) {
+            let path = draw.path('M' + (sector.L + margin) + ',' + (sector.L + margin) + ' L' + (sector.L + margin) + ', ' + margin + ' A' + sector.L + ',' + sector.L + ' 1 0,1 ' + (sector.X + margin) + ', ' + (sector.Y + margin) + ' z');
+            path.fill(sector.color);
+            path.animate(1000, '<>', 0).rotate(sector.R, sector.L + margin, sector.L + margin);
+            //newSector.setAttributeNS(null, 'transform', 'rotate(' + sector.R + ', '+ sector.L+', '+ sector.L+')');
+
+            path.mouseover(function(){
+              path.opacity(selectOpacity);
+              unstackBars(key);
+            })
+
+            path.mouseout(function(){
+              path.opacity(1);
+              stackBars(key);
+            })
+        });
+
+        var midCircle = draw.circle(chartSize * 0.28 * 2);
+        midCircle.fill('white');
+        midCircle.center(chartSize * 0.5 + margin, chartSize * 0.5 + margin);
+
+      }
+
+      function toggleActive(index) {
+        for (let i = 0; i < circles.length; i++) {
+          if (i != index) {
+            circles[i].fill('white');
+          } else {
+            circles[i].fill('blue');
+          }
+        }
+      }
+
+      function unstackBars(index) {
+        let tempYScale;
+        let tempLabels = [];
+        for (let j = 0; j < transportArray.length; j++) {
+          for (let k = 0; k < numCategories; k++) {
+            if (k != index) {
+              bars[j][k].opacity(0);
+            } else {
+              tempYScale = 10;
+              tempLabels = [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48];
+              bars[j][k].animate(250, '<>', 0)
+                        .height(transportArray[j][k] * tempYScale)
+                        .move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * tempYScale);
+            }
+          }
+        }
+        for (let i = 0; i < ylabels.length; i++) {
+          ylabels[i].text(tempLabels[i] + "");
+        }
+      }
+
+      function stackBars(index) {
+        for (let j = 0; j < transportArray.length; j++) {
+          let cumulativeHeight = 0;
+          for (let k = 0; k < numCategories; k++) {
+            if (k != index) {
+              bars[j][k].opacity(1);
+              cumulativeHeight += transportArray[j][k];
+            } else {
+              bars[j][k].height(transportArray[j][k] * yScale)
+                        .move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale - cumulativeHeight * yScale);
+            }
+          }
+        }
+
+        for (let i = 0; i < ylabels.length; i++) {
+          ylabels[i].text(ticks[i] + "");
+        }
+      }
 
     </script>
   </body>

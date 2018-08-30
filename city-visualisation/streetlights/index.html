@@ -62,15 +62,7 @@
         var sg = drawing.group();
         var outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
         outline.fill('#050c26');
-        //outline.stroke({color: 'lightgray', width: 2});
-        //outline.stroke({color: 'black'});
 
-
-        // // store the label text on the group
-        // sg.labelString = f.properties.ACT_LOCA_2 + " - " + Math.floor(dataValue*100)+'%';
-        // // and the geo path data
-        // sg.geoPath = f;
-        //
         sg.on('mouseenter', function(){
           // outline.stroke({color: 'lightgray', width: 2});
           //label = drawing.text(this.labelString).move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
@@ -157,24 +149,24 @@
 
         sg.on('mouseenter', function(event){
           box = drawing.group();
-          box.rect(420, 100)
+          box.rect(460, 100)
               .fill('white')
               .attr({'fill-opacity': 0.6})
               .stroke('black')
               .move(event.pageX + 5, event.pageY - 20);
           box.text(f.properties.suburb + " STREET LIGHT")
               .attr({'text-anchor': "middle"})
-              .move(event.pageX + 215, event.pageY - 20 + 15)
+              .move(event.pageX + 5 + 230, event.pageY - 20 + 15)
               .addClass("infoTitle")
 
           let outreachText = (f.properties.outreach === "NONE" || f.properties.outreach === "") ? "N/A outreach detected of lamp type " + f.properties.lamp : f.properties.outreach + "m outreach";
           box.text(outreachText)
               .attr({'text-anchor': "middle"})
-              .move(event.pageX + 215, event.pageY - 20 + 40)
+              .move(event.pageX + 5 + 230, event.pageY - 20 + 40)
               .addClass("infoDesc");
           box.text("Column properties: " + f.properties.columnHeight + " of " + f.properties.columnMaterial)
               .attr({'text-anchor': "middle"})
-              .move(event.pageX + 215, event.pageY - 20 + 70)
+              .move(event.pageX + 5 + 230, event.pageY - 20 + 70)
               .addClass("infoDesc");
           // console.log(d3.mouse(this));
           // label = drawing.text("This is a text").move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
@@ -259,33 +251,6 @@
         drawing.text(lampTypes[i])
                 .move(width - 250 - boxmarginX + 140, boxmarginY + i * 100 + 32)
       }
-
-      /*geojson.features.forEach(f => {
-        dataValue = commuteData[f.properties.ACT_LOCA_2];
-        var sg = drawing.group();
-        var overlay = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
-        overlay.fill('#0e2549');
-        overlay.stroke({width: 3, color: 'white'});
-        overlay.opacity(0);
-
-        // store the label text and the path on the group
-        sg.labelString = f.properties.ACT_LOCA_2;
-        sg.geoPath = f;
-
-
-        sg.on('mouseenter', function(){
-          overlay.opacity(0.5);
-          label = drawing.text(this.labelString)
-                    .move(mapPath.centroid(this.geoPath)[0] - this.labelString.length * 5,mapPath.centroid(this.geoPath)[1])
-                    .fill('white');
-        })
-
-        sg.on('mouseleave', function(){
-          overlay.opacity(0);
-          label.remove();
-        })
-
-      });*/
 
     </script>
   </body>
