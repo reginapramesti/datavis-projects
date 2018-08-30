@@ -262,16 +262,11 @@
             if (k != index) {
               bars[j][k].opacity(0);
             } else {
-              tempYScale = 10;
-              tempLabels = [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48];
               bars[j][k].animate(250, '<>', 0)
                         .height(transportArray[j][k] * tempYScale)
                         .move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * tempYScale);
             }
           }
-        }
-        for (let i = 0; i < ylabels.length; i++) {
-          ylabels[i].text(tempLabels[i] + "");
         }
       }
 
@@ -287,10 +282,6 @@
                         .move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale - cumulativeHeight * yScale);
             }
           }
-        }
-
-        for (let i = 0; i < ylabels.length; i++) {
-          ylabels[i].text(ticks[i] + "");
         }
       }
 

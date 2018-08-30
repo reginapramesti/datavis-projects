@@ -63,16 +63,6 @@
         var outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
         outline.fill('#050c26');
 
-        sg.on('mouseenter', function(){
-          // outline.stroke({color: 'lightgray', width: 2});
-          //label = drawing.text(this.labelString).move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
-        })
-
-        sg.on('mouseleave', function(){
-          // outline.stroke('none');
-          //label.remove();
-        })
-
       });
 
       var fluorescentArray = [];
@@ -85,7 +75,7 @@
       lightsGeojson.features.forEach(f => {
         var sg = drawing.group();
 
-        mapPath.pointRadius(10); // make this (10 * f.properties.outreach)
+        mapPath.pointRadius(5); // make this (10 * f.properties.outreach)
         var outreach = sg.path(mapPath(f));
         outreach.opacity(0.1);
 
