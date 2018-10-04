@@ -2,13 +2,21 @@
 <html>
   <head>
     <title>Street Lights in ACT</title>
+    <link href="https://fonts.googleapis.com/css?family=Abril+Fatface|Black+Ops+One|Libre+Baskerville|Metamorphous|Playfair+Display|Special+Elite" rel="stylesheet">
     <style type="text/css">
       .suburbLabels {
         color: white;
       }
 
       body {
+        text-align: center;
         background-color: #050c26;
+        color: white;
+        font-family: 'Libre Baskerville', serif;
+      }
+
+      a {
+        color: lightblue;
       }
 
       .streetlights {
@@ -22,12 +30,17 @@
       h1 {
         color: white;
       }
+
+      #drawing {
+        text-align: center;
+      }
     </style>
 
   </head>
   <body>
     <h1>Street Lights in Northern Canberra Suburbs</h1>
     <div id="drawing"></div>
+    <p>Data source: <a href="https://www.data.act.gov.au/Infrastructure-and-Utilities/ACT-Streetlights/cfpr-4tpw">Open Data Portal dataACT</a>
 
     <!-- All the scripts needed to get the drawingualisation working -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
@@ -35,7 +48,6 @@
   	<script src="https://d3js.org/d3-geo.v1.min.js"></script>
   	<script type="text/javascript" src="data/suburbs.geojson.json"></script>
     <script type="text/javascript" src="data/lights_geometry.geojson.json"></script>
-  	<script type="text/javascript" src="data/commute.json"></script>
 
     <script type="text/javascript">
       var width = 1300;
@@ -53,17 +65,17 @@
       //filter the geojson to include only those suburbs in the bike data list
       geojson.features = geojson.features.filter(g => lightsGeojson.features.some(l => l.properties.suburb == g.properties.ACT_LOCA_2));
 
-      projection.fitExtent([[20,20],[1000,1000]], geojson);
+      projection.fitExtent([[20,0],[1000,1000]], geojson);
 
       var mapPath = d3.geoPath(projection);
-
-      geojson.features.forEach(f => {
-        dataValue = commuteData[f.properties.ACT_LOCA_2];
-        var sg = drawing.group();
-        var outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
-        outline.fill('#050c26');
-
-      });
+      //
+      // geojson.features.forEach(f => {
+      //   dataValue = commuteData[f.properties.ACT_LOCA_2];
+      //   var sg = drawing.group();
+      //   var outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
+      //   outline.fill('#050c26');
+      //
+      // });
 
       var fluorescentArray = [];
       var sodiumArray = [];
@@ -75,27 +87,23 @@
       lightsGeojson.features.forEach(f => {
         var sg = drawing.group();
 
-        mapPath.pointRadius(5); // make this (10 * f.properties.outreach)
-        var outreach = sg.path(mapPath(f));
-        outreach.opacity(0.1);
-
-        mapPath.pointRadius(1.5); // sets the radius of the street lights to 1
+        mapPath.pointRadius(1.7); // sets the radius of the street lights to 1
         var points = sg.path(mapPath(f)); // draw the points across the map
 
         // Handler for turning the lights on and off
-        outreach.on('toggleOnOff', function(e) {
+        points.on('toggleOnOff', function(e) {
           if (!lightsOn[e.detail.index]) {
-            outreach.animate(100, '-', 0).opacity(0.1);
+            points.animate(100, '-', 0).fill(colours[e.detail.index]);
           } else {
-            outreach.animate(100, '-', 0).opacity(0);
+            points.animate(100, '-', 0).fill('#333');
           }
         })
 
         // Compact fluorescent lights
         if (f.properties.lampType === "COMPACT FLUORESCENT") {
           points.fill(colours[0]);
-          outreach.fill(colours[0]);
-          fluorescentArray.push(outreach);
+          // outreach.fill(colours[0]);
+          fluorescentArray.push(points);
         }
         // Sodium lights
         else if (f.properties.lampType === "HIGH PRESSURE SODIUM"
@@ -103,20 +111,20 @@
                 || f.properties.lampType === "SODIUM VAPOUR HIGH PRESSURE TW"
                 || f.properties.lampType === "SODIUM VAPOUR LOW PRESSURE") {
           points.fill(colours[1]);
-          outreach.fill(colours[1]);
-          sodiumArray.push(outreach);
+          // outreach.fill(colours[1]);
+          sodiumArray.push(points);
         }
         // LED lights
         else if (f.properties.lampType === "LIGHT EMITTING DIODE") {
           points.fill(colours[2]);
-          outreach.fill(colours[2]);
-          ledArray.push(outreach);
+          // outreach.fill(colours[2]);
+          ledArray.push(points);
         }
         // Metal halide lights
         else if (f.properties.lampType === "METAL HALIDE") {
           points.fill(colours[3]);
-          outreach.fill(colours[3]);
-          halideArray.push(outreach);
+          // outreach.fill(colours[3]);
+          halideArray.push(points);
         }
         // Mercury lights
         else if (f.properties.lampType === "MERCURY HIGH PRESURE FLUORESCE"
@@ -124,52 +132,56 @@
                 || f.properties.lampType === "MERCURY LOW PRESURE FLUORESCEN"
                 || f.properties.lampType === "MERCURY VAPOUR") {
           points.fill(colours[4]);
-          outreach.fill(colours[4]);
-          mercuryArray.push(outreach);
+          // outreach.fill(colours[4]);
+          mercuryArray.push(points);
         }
         // Unidentified lamp types or small categories
         else {
           points.fill(colours[5])
-          outreach.fill(colours[5]);
-          miscArray.push(outreach);
+          // outreach.fill(colours[5]);
+          miscArray.push(points);
         }
         points.addClass('streetlights');
 
         let box;
 
-        sg.on('mouseenter', function(event){
+        var leftmargin = 0;
+        var bottommargin = 140;
+        var boxwidth = 550;
+        var boxheight = 100;
+
+        sg.on('mouseenter', function(){
+          points.stroke({color:'white', width: 5})
           box = drawing.group();
-          box.rect(460, 100)
+          box.rect(boxwidth, boxheight)
               .fill('white')
-              .attr({'fill-opacity': 0.6})
               .stroke('black')
-              .move(event.pageX + 5, event.pageY - 20);
+              .move(leftmargin, height - bottommargin);
           box.text(f.properties.suburb + " STREET LIGHT")
               .attr({'text-anchor': "middle"})
-              .move(event.pageX + 5 + 230, event.pageY - 20 + 15)
+              .move(leftmargin + boxwidth / 2, height - bottommargin + 15)
               .addClass("infoTitle")
 
-          let outreachText = (f.properties.outreach === "NONE" || f.properties.outreach === "") ? "N/A outreach detected of lamp type " + f.properties.lamp : f.properties.outreach + "m outreach";
+          let outreachText = (f.properties.outreach === "NONE" || f.properties.outreach === "") ? f.properties.lampType + " lamp with N/A outreach" : f.properties.lampType + " lamp with " + f.properties.outreach + "m outreach";
           box.text(outreachText)
               .attr({'text-anchor': "middle"})
-              .move(event.pageX + 5 + 230, event.pageY - 20 + 40)
+              .move(leftmargin + boxwidth / 2, height - bottommargin + 45)
               .addClass("infoDesc");
           box.text("Column properties: " + f.properties.columnHeight + " of " + f.properties.columnMaterial)
               .attr({'text-anchor': "middle"})
-              .move(event.pageX + 5 + 230, event.pageY - 20 + 70)
+              .move(leftmargin + boxwidth / 2, height - bottommargin + 70)
               .addClass("infoDesc");
-          // console.log(d3.mouse(this));
-          // label = drawing.text("This is a text").move(mapPath.centroid(this.geoPath)[0],mapPath.centroid(this.geoPath)[1]);
         })
 
         sg.on('mouseleave', function(){
+          points.stroke('none')
           box.remove();
-          // label.remove();
         })
       })
 
       var boxmarginX = 120;
       var boxmarginY = 150;
+
       for (let i = 0; i < 6; i++) {
         drawing.rect(280, 100)
                 .fill('lightcyan')
@@ -224,9 +236,9 @@
 
         toggleSwitch.on('toggleOnOff', function() {
             if (!lightsOn[i]) {
-              toggleSwitch.animate(200, '>', 0).move(width - 250 - boxmarginX + 80, boxmarginY + i * 100 + 30);
+              toggleSwitch.animate(100, '>', 0).move(width - 250 - boxmarginX + 80, boxmarginY + i * 100 + 30);
             } else {
-              toggleSwitch.animate(200, '>', 0).move(width - 250 - boxmarginX + 20, boxmarginY + i * 100 + 30);
+              toggleSwitch.animate(100, '>', 0).move(width - 250 - boxmarginX + 20, boxmarginY + i * 100 + 30);
             }
         })
 

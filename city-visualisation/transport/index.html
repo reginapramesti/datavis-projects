@@ -2,9 +2,18 @@
 <html>
   <head>
     <title>ACT Transport</title>
+    <link href="https://fonts.googleapis.com/css?family=Black+Ops+One|Playfair+Display|Special+Elite" rel="stylesheet">
     <style type="text/css">
+      body {
+        text-align: center;
+        font-family: 'Playfair Display', serif;
+      }
       .clickable {
         cursor: pointer;
+      }
+
+      #drawing {
+        text-align: center;
       }
 
     </style>
@@ -13,13 +22,14 @@
   <body>
     <h1>ACT Average Passenger Boardings by Service Type</h1>
     <div id="drawing"></div>
+    <p>Data source: <a href="https://www.data.act.gov.au/Transport/Average-Passenger-Boardings-By-Service-Type-2017-1/v8cf-i3z8">Open Data Portal dataACT</a></p>
 
     <!-- All the scripts needed to get the drawingualisation working -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
   	<script type="text/javascript" src="data/transport.json"></script>
 
     <script type="text/javascript">
-      var draw = SVG("drawing").size(1200, 1000);
+      var draw = SVG("drawing").size(1200, 750);
 
       const numCategories = 4;
 
@@ -262,9 +272,8 @@
             if (k != index) {
               bars[j][k].opacity(0);
             } else {
-              bars[j][k].animate(250, '<>', 0)
-                        .height(transportArray[j][k] * tempYScale)
-                        .move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * tempYScale);
+              bars[j][k].animate(100, '<>', 0)
+                        .move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale);
             }
           }
         }
@@ -278,8 +287,7 @@
               bars[j][k].opacity(1);
               cumulativeHeight += transportArray[j][k];
             } else {
-              bars[j][k].height(transportArray[j][k] * yScale)
-                        .move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale - cumulativeHeight * yScale);
+              bars[j][k].move(xMargin + j * barSpacing, yBottom - transportArray[j][k] * yScale - cumulativeHeight * yScale);
             }
           }
         }

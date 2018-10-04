@@ -2,7 +2,20 @@
 <html>
   <head>
     <title>ACT Crimes</title>
+    <link href="https://fonts.googleapis.com/css?family=Abril+Fatface|Black+Ops+One|Libre+Baskerville|Metamorphous|Playfair+Display|Special+Elite" rel="stylesheet">
     <style type="text/css">
+
+      h1 {
+      font-family: 'Black Ops One', cursive;
+      }
+
+      p {
+        font-family: 'Playfair Display', sans-serif;
+      }
+
+      body {
+        text-align: center;
+      }
       svg {
         background-color: #fff
       }
@@ -13,17 +26,31 @@
 
       .hugeNumber {
         font-size: 10em;
+        font-family: 'Special Elite', cursive;
       }
 
       .largeText {
         font-size: 2em;
       }
+
+      #drawing {
+        text-align: center;
+        display: block
+      }
+
+      #drawing .suburbLabel {
+        font-family: 'Special Elite', cursive;
+        display: block;
+        font-size: 80px;
+        line-height: 50px;
+      }
     </style>
 
   </head>
   <body>
-    <h1>ACT Crime Statistics (as of March 2017)</h1>
+    <h1>ACT Crime Statistics 2017</h1>
     <div id="drawing"></div>
+    <p>Data source: <a href="https://www.data.act.gov.au/Justice-Safety-and-Emergency/ACT-Crime-Statistics/2egm-dieb">Open Data Portal dataACT</a><p>
 
     <!-- All the scripts needed to get the drawingualisation working -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
@@ -32,11 +59,10 @@
   	<script src="https://d3js.org/d3-array.v1.min.js"></script>
   	<script src="https://d3js.org/d3-geo.v1.min.js"></script>
   	<script type="text/javascript" src="data/suburbs.geojson.json"></script>
-  	<script type="text/javascript" src="data/commute.json"></script>
 
     <script type="text/javascript">
       var width = 1200;
-      var height = 1000;
+      var height = 1100;
       var draw = SVG("drawing").size(width, height);
 
       var projection = d3.geoMercator()
@@ -47,7 +73,7 @@
       //filter the geojson to include only those suburbs in the bike data list
       geojson.features = geojson.features.filter(g => crimeData.some(data => data.suburb === g.properties.ACT_LOCA_2));
 
-      projection.fitExtent([[0,20],[900,900]], geojson)
+      projection.fitExtent([[0,20],[1100,900]], geojson)
 
       var mapPath = d3.geoPath(projection);
 
@@ -56,6 +82,18 @@
       var label;
       var suburbs = [];
 
+      var instrBoxMarginTop = height / 2 - 100;
+      var instrBoxMarginLeft = 150;
+
+      var instr = draw.text("")
+          .attr({'text-anchor': 'middle'})
+          .move(instrBoxMarginLeft, instrBoxMarginTop)
+          .rotate(270, instrBoxMarginLeft, instrBoxMarginTop)
+          .addClass('suburbLabel');
+
+      instr.on('changeText', function(e) {
+        instr.text(e.detail.textToDisplay);
+      });
 
       var labels = ["Homicide", "Assault", "Sexual assault", "Offences against a person",
                     "Burglary", "Robbery", "Motor vehicle theft", "Property damage",
@@ -67,17 +105,18 @@
         let label;
         for (let i = 0; i < crimeData.length; i++) {
           if (crimeData[i].suburb === f.properties.ACT_LOCA_2) {
-            dataValue = crimeData[i].trafficInfringement;
+            dataValue = crimeData[i].offencesOther;
             suburb = crimeData[i].suburb;
-            label = labels[9];
+            label = labels[8];
           }
         }
 
     		var sg = draw.group();
-    		var outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
+    		let outline = sg.path(mapPath(f)).id(f.properties.ACT_LOCA_2);
     		outline.fill(cs(dataValue / 120).hex());
         outline.stroke({color: 'darkblue'});
         outline.addClass('clickable');
+
 
         outline.on('changeValues', function(e) {
           label = labels[e.detail.index];
@@ -143,10 +182,14 @@
         })
 
         outline.mouseover(function() {
-          outline.opacity(0.5);
+
+          outline.fill('lightgray');
+          instr.fire('changeText', {textToDisplay: suburb});
         })
         outline.mouseout(function() {
-          outline.opacity(1);
+          outline.fill(cs(dataValue / 120).hex());
+          instr.fire('changeText', {textToDisplay: ""});
+
         })
 
         outline.click(function() {
@@ -155,22 +198,22 @@
           let boxwidth = 550;
           let boxheight = 360;
           display.rect(boxwidth, boxheight)
-                  .move(width - boxwidth - 20, height - boxheight - 20)
+                  .move(width - boxwidth - 20, height - boxheight - 30)
                   .fill('white')
                   .stroke('black');
 
           display.text(dataValue + "")
-                  .move(width - boxwidth - 20 + 275, height - boxheight - 20 + 200)
+                  .move(width - boxwidth - 20 + 275, height - boxheight - 30 + 200)
                   .fill('black')
                   .attr({'text-anchor': 'middle'})
                   .addClass('hugeNumber')
           display.text(label + " in")
-                  .move(width - boxwidth - 20 + 275, height - boxheight - 20 + 250)
+                  .move(width - boxwidth - 20 + 275, height - boxheight - 30 + 250)
                   .fill('black')
                   .attr({'text-anchor': 'middle'})
                   .addClass('largeText')
           display.text("" + suburb)
-                  .move(width - boxwidth - 20 + 275, height - boxheight - 20 + 290)
+                  .move(width - boxwidth - 20 + 275, height - boxheight - 30 + 290)
                   .fill('black')
                   .attr({'text-anchor': 'middle'})
                   .addClass('largeText')
@@ -181,12 +224,12 @@
           for (let i = 0; i < dataValue; i++) {
             if (i % 5 == 4) {
               // horizontal line
-              draw.line(-40 + width - boxwidth - 20 + xOffset, 30 + height - boxheight - 20 + yOffset, -40 + width - boxwidth - 20 + xOffset + 50, 30 + height - boxheight - 20 + yOffset).animate(10, '<>', delay)
+              draw.line(-40 + width - boxwidth - 20 + xOffset, 30 + height - boxheight - 30 + yOffset, -40 + width - boxwidth - 20 + xOffset + 50, 30 + height - boxheight - 30 + yOffset).animate(10, '<>', delay)
                   .stroke({color: 'black', width: 5, linecap: 'round'})
                   .opacity(0.4);
             } else {
               // vertical line
-              draw.line(10 + width - boxwidth - 20 + xOffset, height - boxheight - 20 + yOffset, 10 + width - boxwidth - 20 + xOffset, 60 + height - boxheight - 20 + yOffset).animate(10, '>', delay)
+              draw.line(10 + width - boxwidth - 20 + xOffset, height - boxheight - 30 + yOffset, 10 + width - boxwidth - 20 + xOffset, 60 + height - boxheight - 30 + yOffset).animate(10, '>', delay)
                   //.move(10 + width - boxwidth - 20 + xOffset, height - boxheight - 20 + yOffset)
                   .stroke({color: 'black', width: 5})
                   .opacity(0.4);
@@ -205,7 +248,7 @@
     	});
 
       var boxmarginX = 80;
-      var boxmarginY = 50;
+      var boxmarginY = 150;
       var buttons = [];
       for (let i = 0; i < 13; i++) {
 
@@ -231,7 +274,7 @@
       }
 
       // The default data displayed is traffic infringement
-      buttons[9].fill('lightgray').attr({"fill-opacity": 0.3});
+      buttons[8].fill('lightgray').attr({"fill-opacity": 0.3});
 
       function toggleActive(index) {
         for (let i = 0; i < buttons.length; i++) {
