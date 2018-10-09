@@ -16,7 +16,8 @@ var Globe = {
 };
 
 var radii = [100, 75, 54, 28, 10, 0];
-var scales = [1, 0.85, 0.6, 0.45, 0.2];
+var scales = [1, 0.85, 0.6, 0.45, 0.2, 0];
+var layerspacing = [25, 18, 26, 21, 10];
 
 // Given vectors A = (a1, a2, a3); B = (b1, b2, b3);
 // The cross product
@@ -45,7 +46,7 @@ function scaleVector (v, k) {
 }
 
 function addRandomNoise(v) {
-    var difference = 5;
+    var difference = 3;
     return ([v[0] + (Math.random() * 2 - 1) * difference, v[1] + (Math.random() * 2 - 1) * difference, v[2] + (Math.random() * 2 - 1) * difference]);
 }
 
@@ -64,11 +65,12 @@ function main (parameters) {
   var innerrad = parameters.innerrad;
   var thickness = parameters.thickness;
   var solids = [];
-  for (var i = 0; i < radii.length - 1; i++) {
+  
+  var innerTranslate = 0;
+  var outerTranslate = layerspacing[0];
 //   for (var i = 0; i < Globe.features.length; i++) {
+  for (var i = 0; i < scales.length - 1; i++) {
     var feature = Globe.features[0];
-    // outerrad = radii[i];
-    // innerrad = outerrad - 5;
     if (Number(feature.properties.scalerank) < 3) {
       var geometry = feature.geometry;
       if (geometry.type === 'MultiPolygon') {
@@ -87,31 +89,41 @@ function main (parameters) {
           [3, 7, 0],
           [0, 7, 4]
         ];
+        
+        
         var innerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], innerrad));
-        var outerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], outerrad));
+        var outerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], innerrad));
+        // var innerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], innerrad));
+        // var outerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], outerrad));
+        // var outerprev = plus(innerprev, [0, 0, 5]);
         
-        outerprev = addRandomNoise(outerprev);
+        // outerprev = addRandomNoise(outerprev);
         
-        innerprev[2] += scales[i] * 100;
-        outerprev[2] += scales[i] * 100;
+        innerprev[2] += innerTranslate;
+        outerprev[2] += outerTranslate;
         
         innerprev = scaleVector(innerprev, [scales[i], scales[i], 1]);
-        outerprev = scaleVector(outerprev, [scales[i], scales[i], 1]);
+        outerprev = scaleVector(outerprev, [scales[i+1], scales[i+1], 1]);
         
         for (var j = 1; j < coords.length; j++) {
           var innernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], innerrad));
-          var outernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], outerrad));
+          var outernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], innerrad));
+        //   var innernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], innerrad));
+        //   var outernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], outerrad));
+        //   var outernext = plus(innernext, [0, 0, 5]);
+
           
-          outernext = addRandomNoise(outernext);
+        //   outernext = addRandomNoise(outernext);
           
-          innernext[2] += scales[i] * 100;
-          outernext[2] += scales[i] * 100;
+          innernext[2] += innerTranslate;//scales[i] * 100;
+          outernext[2] += outerTranslate;//scales[i] * 100;
           
           
         //   innerprev = scaleVector(innerprev, scales[i]);
         //   outerprev = scaleVector(outerprev, scales[i]);
+        
           innernext = scaleVector(innernext, [scales[i], scales[i], 1]);
-          outernext = scaleVector(outernext, [scales[i], scales[i], 1]);
+          outernext = scaleVector(outernext, [scales[i+1], scales[i+1], 1]);
           
           var delta = norm(cross(diff(outerprev, innerprev), diff(outerprev, outernext)));
           delta = [delta[0] * thickness, delta[1] * thickness, delta[2] * thickness];
@@ -121,8 +133,6 @@ function main (parameters) {
         //   innerprev[2] = 2;
         //   outernext[2] = 0;
         //   outerprev[2] = 2;
-          
-        //   console.log(innernext);
           
           var p = [
             innerprev,
@@ -142,20 +152,14 @@ function main (parameters) {
         }
       }
     }
+    innerTranslate = outerTranslate;
+    outerTranslate += layerspacing[i+1];
   }
   
-//   console.log(innerprev);
-//   console.log(scaleVector(innerprev, 0.75));
+  // Just to figure out which way is positive x axis.
+//   solids.push(cube().translate([1, 1, 1]));
   
-  
-//   solids.push(polyhedron({      // openscad-like (e.g. pyramid)
-//       points: [ [10,10,0],[10,-10,0],[-10,-10,0],[-10,10,0], // the four points at base
-//                 [0,0,10] ],                                  // the apex point 
-//       triangles: [ [0,1,4],[1,2,4],[2,3,4],[3,0,4],          // each triangle side
-//                   [1,0,3],[2,1,3] ]                         // two triangles for square base
-//   }));
-  
-  console.log(Math.random());
-
   return (solids);
 }
+
+
