@@ -85,7 +85,7 @@ function main (parameters) {
       let vector = sph_to_cart(sph(coords[j][0], 90.0 - coords[j][1], innerrad));
 
       if (i !== 0)
-      vector = addRandomNoise(vector);
+        vector = addRandomNoise(vector);
 
       currentLayer.push(vector);
     }
@@ -117,7 +117,7 @@ function main (parameters) {
     let outerprev = antarcticaShapes[i+1][0];
 
     if (i === 0)
-    innerprev[2] += innerTranslate;
+      innerprev[2] += innerTranslate;
     outerprev[2] += outerTranslate;
 
     innerprev = scaleVector(innerprev, [scales[i], scales[i], 1]);
@@ -128,7 +128,7 @@ function main (parameters) {
       let outernext = antarcticaShapes[i+1][j];
 
       if (i === 0)
-      innernext[2] += innerTranslate;
+        innernext[2] += innerTranslate;
       outernext[2] += outerTranslate;
 
       innernext = scaleVector(innernext, [scales[i], scales[i], 1]);
