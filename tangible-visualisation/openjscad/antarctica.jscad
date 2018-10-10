@@ -5,6 +5,8 @@
 // date       : 22.12.2013
 // file       : globe.jscad
 
+// This file has been modified by Regina Pramesti
+
 include('maths_geodesic.jscad');
 
 // Small scale world data from http://www.naturalearthdata.com converted to GeoJSON with QGIS (http://www.qgis.org/.)
@@ -41,13 +43,15 @@ function plus (a, b) {
 }
 
 // Functions below are implemented by Regina
+// Scales a vector by a vector
 function scaleVector (v, k) {
     return ([v[0] * k[0], v[1] * k[1], v[2] * k[2]]);
 }
 
+// Adds random noise to the x and y components of the vector
 function addRandomNoise(v) {
     var difference = 3;
-    return ([v[0] + (Math.random() * 2 - 1) * difference, v[1] + (Math.random() * 2 - 1) * difference, v[2] + (Math.random() * 2 - 1) * difference]);
+    return ([v[0] + (Math.random() * 2 - 1) * difference, v[1] + (Math.random() * 2 - 1) * difference, v[2]]);
 }
 
 function getParameterDefinitions () {
@@ -68,8 +72,34 @@ function main (parameters) {
   
   var innerTranslate = 0;
   var outerTranslate = layerspacing[0];
-//   for (var i = 0; i < Globe.features.length; i++) {
-  for (var i = 0; i < scales.length - 1; i++) {
+  
+  var antarcticaShapes = [];
+  for (let i = 0; i < scales.length; i++) {
+      let coords = Globe.features[0].geometry.coordinates;
+      
+      let currentLayer = [];
+      for (let j = 0; j < coords.length; j++) {
+          let vector = sph_to_cart(sph(coords[j][0], 90.0 - coords[j][1], innerrad));
+          
+          if (i !== 0) {
+              vector = addRandomNoise(vector);
+          }
+          
+        //   vector = scaleVector(vector, [scales[i], scales[i], 1]);
+          
+          currentLayer.push(vector);
+      }
+      antarcticaShapes.push(currentLayer);
+      
+  }
+  
+  // NOTE: in JS when assigning an array value to a variable, changing the variable
+  // will change the value in the array because it's a pointer!!!!
+  
+//   for (let i = 0; i < Globe.features.length; i++) {
+  for (let i = 0; i < scales.length - 1; i++) {
+    console.log(innerTranslate);
+    console.log(outerTranslate);
     var feature = Globe.features[0];
     if (Number(feature.properties.scalerank) < 3) {
       var geometry = feature.geometry;
@@ -90,24 +120,30 @@ function main (parameters) {
           [0, 7, 4]
         ];
         
+        let innerprev = antarcticaShapes[i][0];
+        let outerprev = antarcticaShapes[i+1][0];
         
-        var innerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], innerrad));
-        var outerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], innerrad));
+        // console.log(outerprev);
+        // console.log(sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], innerrad)));
+        // var innerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], innerrad));
+        // var outerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], innerrad));
         // var innerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], innerrad));
         // var outerprev = sph_to_cart(sph(coords[0][0], 90.0 - coords[0][1], outerrad));
         // var outerprev = plus(innerprev, [0, 0, 5]);
         
         // outerprev = addRandomNoise(outerprev);
-        
-        innerprev[2] += innerTranslate;
+        if (i === 0)
+          innerprev[2] += innerTranslate;
         outerprev[2] += outerTranslate;
         
         innerprev = scaleVector(innerprev, [scales[i], scales[i], 1]);
         outerprev = scaleVector(outerprev, [scales[i+1], scales[i+1], 1]);
         
-        for (var j = 1; j < coords.length; j++) {
-          var innernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], innerrad));
-          var outernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], innerrad));
+        for (let j = 1; j < coords.length; j++) {
+          let innernext = antarcticaShapes[i][j];
+          let outernext = antarcticaShapes[i+1][j];
+        //   var innernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], innerrad));
+        //   var outernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], innerrad));
         //   var innernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], innerrad));
         //   var outernext = sph_to_cart(sph(coords[j + 0][0], 90.0 - coords[j + 0][1], outerrad));
         //   var outernext = plus(innernext, [0, 0, 5]);
@@ -115,13 +151,10 @@ function main (parameters) {
           
         //   outernext = addRandomNoise(outernext);
           
-          innernext[2] += innerTranslate;//scales[i] * 100;
+          if (i === 0)
+            innernext[2] += innerTranslate;//scales[i] * 100;
           outernext[2] += outerTranslate;//scales[i] * 100;
           
-          
-        //   innerprev = scaleVector(innerprev, scales[i]);
-        //   outerprev = scaleVector(outerprev, scales[i]);
-        
           innernext = scaleVector(innernext, [scales[i], scales[i], 1]);
           outernext = scaleVector(outernext, [scales[i+1], scales[i+1], 1]);
           
@@ -144,6 +177,8 @@ function main (parameters) {
             plus(delta, outernext),
             plus(delta, outerprev)
           ];
+          
+        //   console.log(outerprev);
           var poly = polyhedron({points: p, triangles: t});
           poly = poly.setColor(0.5, 0.7, 1);
           solids.push(poly);
@@ -161,5 +196,6 @@ function main (parameters) {
   
   return (solids);
 }
+
 
 
