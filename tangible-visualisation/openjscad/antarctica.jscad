@@ -84,8 +84,8 @@ function main (parameters) {
     for (let j = 0; j < coords.length; j++) {
       let vector = sph_to_cart(sph(coords[j][0], 90.0 - coords[j][1], innerrad));
 
-      if (i !== 0)
-        vector = addRandomNoise(vector);
+    //   if (i !== 0)
+    //     vector = addRandomNoise(vector);
 
       currentLayer.push(vector);
     }
@@ -93,74 +93,92 @@ function main (parameters) {
 
   }
 
+// polygon([ [0,0],[3,0],[3,3] ]);                // openscad like
+// polygon({ points: [ [0,0],[3,0],[3,3] ] });                    
+// polygon({ points: [ [0,0],[3,0],[3,3],[0,6] ], paths: [ [0,1,2],[1,2,3] ] }); // multiple paths not yet implemented
+
+// var shape1 = CAG.fromPoints([ [0,0],[5,0],[3,5],[0,5] ]);    // CAG built ins 
+  var points = [];
+  for (let i = 0; i < antarcticaShapes[0].length; i++) {
+      points.push([antarcticaShapes[0][i][0], antarcticaShapes[0][i][1]]);
+  }
+   solids = CAG.fromPoints(points);
+
   // NOTE: in JS when assigning an array value to a variable, changing the variable
   // will change the value in the array because it's a pointer!!!!
 
-  for (let i = 0; i < scales.length - 1; i++) {
-    var coords = Globe.features[0].geometry.coordinates;
-    var t = [
-      [0, 1, 2],
-      [2, 3, 0],
-      [4, 7, 6],
-      [6, 5, 4],
-      [0, 4, 1],
-      [1, 4, 5],
-      [1, 5, 2],
-      [2, 5, 6],
-      [2, 6, 3],
-      [3, 6, 7],
-      [3, 7, 0],
-      [0, 7, 4]
-    ];
+//   for (let i = 3; i < 4; i++) {
+//     var coords = Globe.features[0].geometry.coordinates;
+//     var t = [
+//       [0, 1, 2],
+//       [2, 3, 0],
+//       [4, 7, 6],
+//       [6, 5, 4],
+//       [0, 4, 1],
+//       [1, 4, 5],
+//       [1, 5, 2],
+//       [2, 5, 6],
+//       [2, 6, 3],
+//       [3, 6, 7],
+//       [3, 7, 0],
+//       [0, 7, 4]
+//     ];
 
-    let innerprev = antarcticaShapes[i][0];
-    let outerprev = antarcticaShapes[i+1][0];
+//     let innerprev = antarcticaShapes[i][0];
+//     let outerprev = antarcticaShapes[i+1][0];
+//     if (i === scales.length - 2)
+//       outerprev = [0, 0, -88];
 
-    if (i === 0)
-      innerprev[2] += innerTranslate;
-    outerprev[2] += outerTranslate;
+//     if (i === 0)
+//       innerprev[2] += innerTranslate;
+//     outerprev[2] += outerTranslate;
 
-    innerprev = scaleVector(innerprev, [scales[i], scales[i], 1]);
-    outerprev = scaleVector(outerprev, [scales[i+1], scales[i+1], 1]);
+//     innerprev = scaleVector(innerprev, [scales[i], scales[i], 1]);
+//     outerprev = scaleVector(outerprev, [scales[i+1], scales[i+1], 1]);
 
-    for (let j = 1; j < coords.length; j++) {
-      let innernext = antarcticaShapes[i][j];
-      let outernext = antarcticaShapes[i+1][j];
+//     for (let j = 1; j < coords.length; j++) {
+//       let innernext = antarcticaShapes[i][j];
+//       let outernext = antarcticaShapes[i+1][j];
+      
+//       if (i === scales.length - 2) 
+//         outernext = [0, 0, -88];
 
-      if (i === 0)
-        innernext[2] += innerTranslate;
-      outernext[2] += outerTranslate;
+//       if (i === 0)
+//         innernext[2] += innerTranslate;
+//       outernext[2] += outerTranslate;
 
-      innernext = scaleVector(innernext, [scales[i], scales[i], 1]);
-      outernext = scaleVector(outernext, [scales[i+1], scales[i+1], 1]);
+//       innernext = scaleVector(innernext, [scales[i], scales[i], 1]);
+//       outernext = scaleVector(outernext, [scales[i+1], scales[i+1], 1]);
 
-      var delta = norm(cross(diff(outerprev, innerprev), diff(outerprev, outernext)));
-      delta = [delta[0] * thickness, delta[1] * thickness, delta[2] * thickness];
+//       var delta = norm(cross(diff(outerprev, innerprev), diff(outerprev, outernext)));
+//       delta = [delta[0] * thickness, delta[1] * thickness, delta[2] * thickness];
 
 
-      var p = [
-        innerprev,
-        innernext,
-        outernext,
-        outerprev,
-        plus(delta, innerprev),
-        plus(delta, innernext),
-        plus(delta, outernext),
-        plus(delta, outerprev)
-      ];
+//       var p = [
+//         innerprev,
+//         innernext,
+//         outernext,
+//         outerprev,
+//         plus(delta, innerprev),
+//         plus(delta, innernext),
+//         plus(delta, outernext),
+//         plus(delta, outerprev)
+//       ];
 
-      var poly = polyhedron({points: p, triangles: t});
-      poly = poly.setColor(0.5, 0.7, 1);
-      solids.push(poly);
-      innerprev = innernext;
-      outerprev = outernext;
-    }
-    innerTranslate = outerTranslate;
-    outerTranslate += layerspacing[i+1];
-  }
+//       var poly = polyhedron({points: p, triangles: t});
+//       poly = poly.setColor(0.5, 0.7, 1);
+//       solids.push(poly);
+//       innerprev = innernext;
+//       outerprev = outernext;
+//     }
+//     innerTranslate = outerTranslate;
+//     outerTranslate += layerspacing[i+1];
+//   }
 
   // Just to figure out which way is positive x axis for debugging purposes.
   // solids.push(cube().translate([1, 1, 1]));
 
   return (solids);
 }
+
+
