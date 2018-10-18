@@ -83,6 +83,8 @@ function main (parameters) {
     let currentLayer = [];
     for (let j = 0; j < coords.length; j++) {
       let vector = sph_to_cart(sph(coords[j][0], 90.0 - coords[j][1], innerrad));
+      
+    //   vector = scaleVector(vector, [scales[i], scales[i], 1]);
 
     //   if (i !== 0)
     //     vector = addRandomNoise(vector);
@@ -98,11 +100,24 @@ function main (parameters) {
 // polygon({ points: [ [0,0],[3,0],[3,3],[0,6] ], paths: [ [0,1,2],[1,2,3] ] }); // multiple paths not yet implemented
 
 // var shape1 = CAG.fromPoints([ [0,0],[5,0],[3,5],[0,5] ]);    // CAG built ins 
-  var points = [];
+  var pointsBase = [];
+  var pointsNext = [];
   for (let i = 0; i < antarcticaShapes[0].length; i++) {
-      points.push([antarcticaShapes[0][i][0], antarcticaShapes[0][i][1]]);
+      pointsBase.push([antarcticaShapes[0][i][0], antarcticaShapes[0][i][1]]);
+      pointsNext.push([antarcticaShapes[1][i][0], antarcticaShapes[1][i][1]]);
   }
-   solids = CAG.fromPoints(points);
+  var base = CAG.fromPoints(pointsBase);
+  var next = CAG.fromPoints(pointsNext);
+//   var h = hull( base, next.translate([0, 0, 10]) );
+  
+  var layers = [];
+  var scaleBy = (scales[0] - scales[1]) / (layerspacing[0] * 4);
+  for (let i = 0; i < layerspacing[0] * 4; i++) {
+    //   let vector = scaleVector(base, [scaleBy * i, scaleBy * i, scaleBy * i]);
+      let layer = linear_extrude({height: 0.25}, base.scale(2 - scaleBy * i)).translate([0, 0, i * 0.25]);
+      layers.push(layer);
+  }
+  
 
   // NOTE: in JS when assigning an array value to a variable, changing the variable
   // will change the value in the array because it's a pointer!!!!
@@ -178,7 +193,5 @@ function main (parameters) {
   // Just to figure out which way is positive x axis for debugging purposes.
   // solids.push(cube().translate([1, 1, 1]));
 
-  return (solids);
+  return layers;//linear_extrude({height:0.5}, next);
 }
-
-
