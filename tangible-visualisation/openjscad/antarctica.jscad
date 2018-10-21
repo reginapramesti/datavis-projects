@@ -109,14 +109,27 @@ function main (parameters) {
   var base = CAG.fromPoints(pointsBase);
   var next = CAG.fromPoints(pointsNext);
 //   var h = hull( base, next.translate([0, 0, 10]) );
-  
+
+  var offset = 0;
   var layers = [];
-  var scaleBy = (scales[0] - scales[1]) / (layerspacing[0] * 4);
-  for (let i = 0; i < layerspacing[0] * 4; i++) {
-    //   let vector = scaleVector(base, [scaleBy * i, scaleBy * i, scaleBy * i]);
-      let layer = linear_extrude({height: 0.25}, base.scale(2 - scaleBy * i)).translate([0, 0, i * 0.25]);
-      layers.push(layer);
+  var slicesPerUnit = 1;
+  for (let i = 0; i < scales.length - 1; i++) {
+      let scaleBy = (scales[i] - scales[i+1]) / (layerspacing[i] * slicesPerUnit);
+      
+      for (let j = 0; j < layerspacing[i] * slicesPerUnit; j++) {
+          let extrudeHeight = 1 / slicesPerUnit;
+          let layer = linear_extrude({height: extrudeHeight}, base.scale(scales[i] - scaleBy * j)).translate([0, 0, offset + j * extrudeHeight]);
+          layers.push(layer);
+      }
+      offset += layerspacing[i];
   }
+  
+//   var scaleBy = (scales[0] - scales[1]) / (layerspacing[0] * 4);
+//   for (let i = 0; i < layerspacing[0] * 4; i++) {
+//     //   let vector = scaleVector(base, [scaleBy * i, scaleBy * i, scaleBy * i]);
+//       let layer = linear_extrude({height: 0.25}, base.scale(2 - scaleBy * i)).translate([0, 0, i * 0.25]);
+//       layers.push(layer);
+//   }
   
 
   // NOTE: in JS when assigning an array value to a variable, changing the variable
